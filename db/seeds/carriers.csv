@@ -1,0 +1,14 @@
+# db/seeds/carriers.csv — scheduled Indian domestic carriers in the APIx basket.
+#
+# Source: DGCA list of scheduled domestic operators (https://www.dgca.gov.in),
+#   IATA/ICAO designators as published by the carriers. Compiled 2026-09-04.
+# carrier_type is APIx's own FSC/LCC/REGIONAL classification — a methodological
+# choice documented in docs/methodology.md, not a DGCA attribute.
+# Lines starting with '#' are ignored by the loader.
+iata,icao,name,carrier_type
+AI,AIC,Air India,FSC
+6E,IGO,IndiGo,LCC
+IX,AXB,Air India Express,LCC
+SG,SEJ,SpiceJet,LCC
+QP,AKJ,Akasa Air,LCC
+9I,LLR,Alliance Air,REGIONAL

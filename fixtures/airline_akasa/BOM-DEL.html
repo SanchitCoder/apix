@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Akasa Air — BOM to DEL</title></head>
+<body>
+<div id="app">Loading fares…</div>
+<script>
+window.__FARE_DATA__ = {
+  "flights": [
+    {
+      "flight_no": "QP1188",
+      "airline_code": "QP",
+      "dep": { "iata": "BOM", "local_time": "2026-09-18T11:20:00" },
+      "arr": { "iata": "DEL", "local_time": "2026-09-18T13:30:00" },
+      "num_stops": 0,
+      "fares": [
+        {
+          "fare_type": "SAVER",
+          "class_of_service": "ECONOMY",
+          "fare_breakup": { "base": 3350.00, "tax": 870.00, "udf": 200.00 },
+          "total": 4420.00,
+          "currency_code": "INR",
+          "seats_left": 7,
+          "is_refundable": false,
+          "free_baggage": true
+        },
+        {
+          "fare_type": "FLEXI",
+          "class_of_service": "ECONOMY",
+          "fare_breakup": { "base": 4600.00, "tax": 960.00, "udf": 200.00 },
+          "total": 5760.00,
+          "currency_code": "INR",
+          "seats_left": 9,
+          "is_refundable": true,
+          "free_baggage": true
+        }
+      ]
+    }
+  ]
+};
+</script>
+</body>
+</html>

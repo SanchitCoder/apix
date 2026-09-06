@@ -1,0 +1,227 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  UV_VERSION: "0.12.9"
+  PYTHON_VERSION: "3.12"
+  # Fail the build rather than silently reaching the network for an unpinned package.
+  UV_FROZEN: "1"
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: Lint and type-check
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+
+      - name: Install workspace
+        run: uv sync --all-packages --frozen
+
+      - name: ruff check
+        run: uv run ruff check --output-format=github .
+
+      - name: ruff format
+        run: uv run ruff format --check .
+
+      - name: mypy (strict on apix_core)
+        run: uv run mypy --config-file mypy.ini
+
+  test:
+    name: Tests and coverage gate
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+
+      - name: Install workspace
+        run: uv sync --all-packages --frozen
+
+      - name: Unit tests with coverage gate
+        # CLAUDE.md definition of done: coverage on packages/apix_core is >= 80%.
+        run: |
+          uv run pytest \
+            --cov=apix_core \
+            --cov-report=term-missing \
+            --cov-report=xml \
+            --cov-fail-under=80
+
+      - name: Integration tests
+        # The GitHub runner has Docker, so testcontainers spins up a real TimescaleDB
+        # and the hypertable path in migration 0001 is genuinely exercised.
+        run: uv run pytest -m integration
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage
+          path: coverage.xml
+          retention-days: 7
+
+  web:
+    name: Web type-check and build
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: apps/web
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install
+        run: npm install
+
+      - name: Type-check
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+
+  web-e2e:
+    name: Web e2e (Playwright)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+
+      - name: Install workspace
+        run: uv sync --all-packages --frozen
+
+      - name: Regenerate the OpenAPI document
+        # docs/openapi.json is generated, not committed — the front end's typed client
+        # and the e2e run both need it in place before anything else here.
+        run: uv run python -m apix_api.openapi > docs/openapi.json
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install web workspace
+        working-directory: apps/web
+        run: npm ci
+
+      - name: Generate the typed API client
+        working-directory: apps/web
+        run: npm run generate:api
+
+      - name: Install Playwright browsers
+        working-directory: apps/web
+        run: npx playwright install --with-deps chromium
+
+      - name: Run e2e suite
+        working-directory: apps/web
+        run: npm run e2e
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: apps/web/playwright-report/
+          retention-days: 7
+
+  images:
+    name: Build images
+    runs-on: ubuntu-24.04
+    needs: [lint, test]
+    strategy:
+      fail-fast: false
+      matrix:
+        image: [api, collector, web]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build ${{ matrix.image }}
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: infra/docker/${{ matrix.image }}.Dockerfile
+          push: false
+          load: true
+          tags: apix-${{ matrix.image }}:ci
+          cache-from: type=gha,scope=${{ matrix.image }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.image }}
+
+      - name: Confirm the image runs as a non-root user
+        # CLAUDE.md: no service runs as root. Asserted here so a Dockerfile edit that
+        # drops the USER line fails CI rather than reaching staging.
+        if: matrix.image != 'web'
+        run: |
+          uid=$(docker run --rm --entrypoint id apix-${{ matrix.image }}:ci -u)
+          echo "uid=$uid"
+          test "$uid" != "0"
+
+  smoke:
+    name: Stack smoke test
+    runs-on: ubuntu-24.04
+    needs: [lint, test]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+
+      - name: Bring the stack up
+        run: make up
+        env:
+          POSTGRES_PASSWORD: ci-not-a-secret
+          APIX_SECRET_KEY: ci-not-a-secret
+          APIX_ENV: ci
+
+      - name: Hit /healthz
+        run: |
+          for attempt in $(seq 1 30); do
+            if curl -fsS http://localhost:8000/healthz; then
+              echo && echo "healthz OK on attempt $attempt"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "api never became healthy"
+          exit 1
+
+      - name: Check the contract endpoints answer
+        run: |
+          set -euo pipefail
+          for path in /readyz /v1/index /v1/metadata/basket /v1/metadata/method; do
+            echo "GET $path"
+            curl -fsS "http://localhost:8000${path}" > /dev/null
+          done
+
+      - name: Dump logs on failure
+        if: failure()
+        run: docker compose logs --no-color --tail=200
+
+      - name: Tear down
+        if: always()
+        run: docker compose down -v

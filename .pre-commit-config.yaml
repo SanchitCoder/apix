@@ -1,0 +1,45 @@
+# Run: uv run pre-commit install
+# Versions are pinned and must match the pins in pyproject.toml.
+default_language_version:
+  python: python3.12
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-added-large-files
+        args: ["--maxkb=512"]
+      - id: check-merge-conflict
+      - id: check-yaml
+      - id: check-toml
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: detect-private-key
+      - id: no-commit-to-branch
+        args: ["--branch", "main"]
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.16.6
+    hooks:
+      - id: ruff
+        args: ["--fix"]
+      - id: ruff-format
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v2.3.1
+    hooks:
+      - id: mypy
+        args: ["--config-file", "mypy.ini"]
+        pass_filenames: false
+        additional_dependencies:
+          - pydantic==2.13.5
+          - sqlalchemy==2.0.52
+          - types-PyYAML==6.0.12.20260815
+
+  - repo: local
+    hooks:
+      - id: no-generated-methodology-edits
+        name: docs/methodology.md is generated, not hand-edited
+        entry: docs/methodology.md must be regenerated, not edited by hand (CLAUDE.md).
+        language: fail
+        files: ^docs/methodology\.md$

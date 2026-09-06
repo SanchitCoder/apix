@@ -1,0 +1,352 @@
+# APIx route basket — config/basket.yaml
+#
+# The 50 directional city-pairs the index is computed over, and the
+# advance-purchase windows each pair is stratified into.
+#
+# dgca_pax_share is null on EVERY route, deliberately.
+# Phase 2 populates these from the DGCA monthly domestic traffic release.
+# They are not estimated, interpolated or guessed here: an invented weight
+# would propagate into a published national statistic. BasketConfig rejects a
+# partially-populated weight vector, so this file is all-null until it is all-real.
+#
+# Routes are directional. DEL-BOM and BOM-DEL are separate observations because
+# they are separately priced.
+
+basket_version: "2026.1"
+effective_from: 2026-01-01
+description: >-
+  Initial APIx basket: the 25 highest-traffic Indian domestic city-pairs, taken in
+  both directions. Composition is fixed for the basket version; weights are
+  attached in Phase 2 from DGCA passenger data.
+
+advance_windows:
+  - code: "AP00_03"
+    min_days: 0
+    max_days: 3
+    label: "0-3 days before departure (walk-up)"
+  - code: "AP04_07"
+    min_days: 4
+    max_days: 7
+    label: "4-7 days before departure"
+  - code: "AP08_14"
+    min_days: 8
+    max_days: 14
+    label: "8-14 days before departure"
+  - code: "AP15_21"
+    min_days: 15
+    max_days: 21
+    label: "15-21 days before departure"
+  - code: "AP22_30"
+    min_days: 22
+    max_days: 30
+    label: "22-30 days before departure"
+  - code: "AP31_60"
+    min_days: 31
+    max_days: 60
+    label: "31-60 days before departure"
+  - code: "AP61_90"
+    min_days: 61
+    max_days: 90
+    label: "61-90 days before departure (advance)"
+
+routes:
+  - code: "DEL-BOM"
+    origin: "DEL"
+    dest: "BOM"
+    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    active_from: 2026-01-01
+    active_to: null
+  - code: "BOM-DEL"
+    origin: "BOM"
+    dest: "DEL"
+    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    active_from: 2026-01-01
+    active_to: null
+  - code: "DEL-BLR"
+    origin: "DEL"
+    dest: "BLR"
+    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    active_from: 2026-01-01
+    active_to: null
+  - code: "BLR-DEL"
+    origin: "BLR"
+    dest: "DEL"
+    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    active_from: 2026-01-01
+    active_to: null
+  - code: "BOM-BLR"
+    origin: "BOM"
+    dest: "BLR"
+    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    active_from: 2026-01-01
+    active_to: null
+  - code: "BLR-BOM"
+    origin: "BLR"
+    dest: "BOM"
+    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    active_from: 2026-01-01
+    active_to: null
+  - code: "DEL-CCU"
+    origin: "DEL"
+    dest: "CCU"
+    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    active_from: 2026-01-01
+    active_to: null
+  - code: "CCU-DEL"
+    origin: "CCU"
+    dest: "DEL"
+    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    active_from: 2026-01-01
+    active_to: null
+  - code: "BLR-HYD"
+    origin: "BLR"
+    dest: "HYD"
+    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    active_from: 2026-01-01
+    active_to: null
+  - code: "HYD-BLR"
+    origin: "HYD"
+    dest: "BLR"
+    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    active_from: 2026-01-01
+    active_to: null
+  - code: "DEL-MAA"
+    origin: "DEL"
+    dest: "MAA"
+    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    active_from: 2026-01-01
+    active_to: null
+  - code: "MAA-DEL"
+    origin: "MAA"
+    dest: "DEL"
+    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    active_from: 2026-01-01
+    active_to: null
+  - code: "DEL-HYD"
+    origin: "DEL"
+    dest: "HYD"
+    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    active_from: 2026-01-01
+    active_to: null
+  - code: "HYD-DEL"
+    origin: "HYD"
+    dest: "DEL"
+    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    active_from: 2026-01-01
+    active_to: null
+  - code: "BOM-MAA"
+    origin: "BOM"
+    dest: "MAA"
+    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    active_from: 2026-01-01
+    active_to: null
+  - code: "MAA-BOM"
+    origin: "MAA"
+    dest: "BOM"
+    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    active_from: 2026-01-01
+    active_to: null
+  - code: "BLR-MAA"
+    origin: "BLR"
+    dest: "MAA"
+    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    active_from: 2026-01-01
+    active_to: null
+  - code: "MAA-BLR"
+    origin: "MAA"
+    dest: "BLR"
+    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    active_from: 2026-01-01
+    active_to: null
+  - code: "DEL-PNQ"
+    origin: "DEL"
+    dest: "PNQ"
+    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    active_from: 2026-01-01
+    active_to: null
+  - code: "PNQ-DEL"
+    origin: "PNQ"
+    dest: "DEL"
+    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    active_from: 2026-01-01
+    active_to: null
+  - code: "BOM-CCU"
+    origin: "BOM"
+    dest: "CCU"
+    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    active_from: 2026-01-01
+    active_to: null
+  - code: "CCU-BOM"
+    origin: "CCU"
+    dest: "BOM"
+    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    active_from: 2026-01-01
+    active_to: null
+  - code: "DEL-AMD"
+    origin: "DEL"
+    dest: "AMD"
+    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    active_from: 2026-01-01
+    active_to: null
+  - code: "AMD-DEL"
+    origin: "AMD"
+    dest: "DEL"
+    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    active_from: 2026-01-01
+    active_to: null
+  - code: "DEL-GOI"
+    origin: "DEL"
+    dest: "GOI"
+    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    active_from: 2026-01-01
+    active_to: null
+  - code: "GOI-DEL"
+    origin: "GOI"
+    dest: "DEL"
+    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    active_from: 2026-01-01
+    active_to: null
+  - code: "BOM-HYD"
+    origin: "BOM"
+    dest: "HYD"
+    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    active_from: 2026-01-01
+    active_to: null
+  - code: "HYD-BOM"
+    origin: "HYD"
+    dest: "BOM"
+    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    active_from: 2026-01-01
+    active_to: null
+  - code: "BLR-CCU"
+    origin: "BLR"
+    dest: "CCU"
+    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    active_from: 2026-01-01
+    active_to: null
+  - code: "CCU-BLR"
+    origin: "CCU"
+    dest: "BLR"
+    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    active_from: 2026-01-01
+    active_to: null
+  - code: "DEL-COK"
+    origin: "DEL"
+    dest: "COK"
+    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    active_from: 2026-01-01
+    active_to: null
+  - code: "COK-DEL"
+    origin: "COK"
+    dest: "DEL"
+    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    active_from: 2026-01-01
+    active_to: null
+  - code: "DEL-SXR"
+    origin: "DEL"
+    dest: "SXR"
+    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    active_from: 2026-01-01
+    active_to: null
+  - code: "SXR-DEL"
+    origin: "SXR"
+    dest: "DEL"
+    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    active_from: 2026-01-01
+    active_to: null
+  - code: "DEL-PAT"
+    origin: "DEL"
+    dest: "PAT"
+    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    active_from: 2026-01-01
+    active_to: null
+  - code: "PAT-DEL"
+    origin: "PAT"
+    dest: "DEL"
+    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    active_from: 2026-01-01
+    active_to: null
+  - code: "DEL-LKO"
+    origin: "DEL"
+    dest: "LKO"
+    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    active_from: 2026-01-01
+    active_to: null
+  - code: "LKO-DEL"
+    origin: "LKO"
+    dest: "DEL"
+    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    active_from: 2026-01-01
+    active_to: null
+  - code: "BOM-GOI"
+    origin: "BOM"
+    dest: "GOI"
+    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    active_from: 2026-01-01
+    active_to: null
+  - code: "GOI-BOM"
+    origin: "GOI"
+    dest: "BOM"
+    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    active_from: 2026-01-01
+    active_to: null
+  - code: "BLR-COK"
+    origin: "BLR"
+    dest: "COK"
+    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    active_from: 2026-01-01
+    active_to: null
+  - code: "COK-BLR"
+    origin: "COK"
+    dest: "BLR"
+    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    active_from: 2026-01-01
+    active_to: null
+  - code: "CCU-MAA"
+    origin: "CCU"
+    dest: "MAA"
+    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    active_from: 2026-01-01
+    active_to: null
+  - code: "MAA-CCU"
+    origin: "MAA"
+    dest: "CCU"
+    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    active_from: 2026-01-01
+    active_to: null
+  - code: "DEL-GAU"
+    origin: "DEL"
+    dest: "GAU"
+    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    active_from: 2026-01-01
+    active_to: null
+  - code: "GAU-DEL"
+    origin: "GAU"
+    dest: "DEL"
+    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    active_from: 2026-01-01
+    active_to: null
+  - code: "BOM-AMD"
+    origin: "BOM"
+    dest: "AMD"
+    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    active_from: 2026-01-01
+    active_to: null
+  - code: "AMD-BOM"
+    origin: "AMD"
+    dest: "BOM"
+    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    active_from: 2026-01-01
+    active_to: null
+  - code: "HYD-MAA"
+    origin: "HYD"
+    dest: "MAA"
+    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    active_from: 2026-01-01
+    active_to: null
+  - code: "MAA-HYD"
+    origin: "MAA"
+    dest: "HYD"
+    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    active_from: 2026-01-01
+    active_to: null

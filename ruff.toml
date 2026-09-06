@@ -1,0 +1,61 @@
+# Ruff configuration for the whole workspace.
+target-version = "py312"
+line-length = 100
+src = [
+    "packages/apix_core/src",
+    "apps/api/src",
+    "apps/collector/src",
+    "apps/scheduler/src",
+    "tests",
+]
+extend-exclude = ["db/migrations/versions/*.py.mako", "apps/web"]
+
+[lint]
+select = [
+    "E", "W",    # pycodestyle
+    "F",         # pyflakes
+    "I",         # isort
+    "N",         # pep8-naming
+    "UP",        # pyupgrade
+    "B",         # bugbear
+    "A",         # builtin shadowing
+    "C4",        # comprehensions
+    "DTZ",       # naive-datetime misuse — matters for a timestamped statistical series
+    "T20",       # no print(); structlog only
+    "SIM",       # simplify
+    "PTH",       # pathlib over os.path
+    "RUF",       # ruff-specific
+    "ANN",       # missing annotations
+    "S",         # bandit security rules
+    "ARG",       # unused arguments
+    "TCH",       # type-checking imports
+]
+ignore = [
+    "ANN401",    # explicit Any is permitted where a JSONB payload is genuinely untyped
+    "S101",      # assert is fine (pytest)
+    # TC003 would move stdlib imports (uuid, datetime, Decimal) into TYPE_CHECKING
+    # blocks. SQLAlchemy resolves Mapped[...] annotations at runtime to pick column
+    # types, and Pydantic and FastAPI do the same for their models and signatures, so
+    # following it produces NameError at import. TC001/TC002 stay on.
+    "TC003",
+]
+
+[lint.per-file-ignores]
+"tests/**" = ["ANN", "ARG", "S105", "S106", "DTZ001"]
+"db/migrations/**" = ["ANN", "E501", "I001"]  # Alembic generates its own header order
+"apps/api/src/apix_api/routers/*.py" = ["ARG001"]  # query params are the contract, unused until Phase 4
+
+[lint.isort]
+known-first-party = ["apix_core", "apix_api", "apix_collector", "apix_scheduler"]
+
+[lint.flake8-type-checking]
+runtime-evaluated-base-classes = [
+    "pydantic.BaseModel",
+    "pydantic_settings.BaseSettings",
+    "sqlalchemy.orm.DeclarativeBase",
+]
+
+[format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "lf"

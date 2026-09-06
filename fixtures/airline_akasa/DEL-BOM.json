@@ -1,0 +1,23 @@
+{
+  "flights": [
+    {
+      "flight_no": "QP1421",
+      "airline_code": "QP",
+      "dep": { "iata": "DEL", "local_time": "2026-09-18T07:05:00" },
+      "arr": { "iata": "BOM", "local_time": "2026-09-18T09:10:00" },
+      "num_stops": 0,
+      "fares": [
+        {
+          "fare_type": "SAVER",
+          "class_of_service": "ECONOMY",
+          "fare_breakup": { "base": 3200.00, "tax": 850.00, "udf": 100.00 },
+          "total": 4150.00,
+          "currency_code": "INR",
+          "seats_left": 4,
+          "is_refundable": false,
+          "free_baggage": true
+        }
+      ]
+    }
+  ]
+}

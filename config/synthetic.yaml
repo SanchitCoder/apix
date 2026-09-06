@@ -1,0 +1,118 @@
+# APIx synthetic dataset parameters — config/synthetic.yaml
+#
+# EVERY NUMBER IN THIS FILE IS A SCENARIO PARAMETER, NOT AN OBSERVATION.
+# The generator (apix_core.testing.synthetic) exists so the cleaning, watchdog and
+# index layers can be validated end to end without touching a live website. Values are
+# chosen to reproduce the *statistical shape* of Indian domestic airfares (levels,
+# booking curve, weekly and festival seasonality, sell-out behaviour, fare component
+# structure); none of them is a measurement, and rows generated from them are tagged
+# SYNTHETIC on source_type, collection_method and legal_basis so they can never be
+# mistaken for collected data.
+#
+# Schema: apix_core.config.synthetic.SyntheticConfig (validated on load).
+
+version: "2026.1"
+seed: 20260904
+description: >-
+  Labelled synthetic Indian domestic airfare scenario. Base price proportional to
+  great-circle distance with carrier effects; parameterised advance-purchase curve;
+  Friday/Sunday and festival peaks; nested fare buckets whose closure produces genuinely
+  missing observations; base fare + percentage tax + per-airport UDF + per-channel
+  convenience fee; known injected anomalies recorded in a ground-truth file.
+
+pricing:
+  base_floor_inr: 1600.0        # fixed cost component of the base fare
+  price_per_km_inr: 2.9         # distance-proportional component
+  route_effect_sigma: 0.08      # fixed lognormal effect per (route, carrier)
+  daily_noise_sigma: 0.05       # idiosyncratic noise per (flight, travel day, query day)
+  tax_rate: 0.05                # percentage tax on base fare (GST-like)
+  udf_default_inr: 150.0        # user development fee at the origin airport.
+  udf_overrides_inr:            # Scenario values, NOT the current AERA tariff.
+    DEL: 100.0
+    BOM: 200.0
+    BLR: 300.0
+    HYD: 250.0
+    MAA: 200.0
+    CCU: 450.0
+    GOI: 250.0
+
+# fare_factor: price level relative to the market; presence_weight: how likely the
+# carrier is to appear on a basket route.
+carriers:
+  AI: { fare_factor: 1.10, presence_weight: 0.90 }
+  6E: { fare_factor: 1.00, presence_weight: 1.00 }
+  IX: { fare_factor: 0.93, presence_weight: 0.50 }
+  SG: { fare_factor: 0.95, presence_weight: 0.45 }
+  QP: { fare_factor: 0.97, presence_weight: 0.50 }
+  9I: { fare_factor: 1.05, presence_weight: 0.15 }
+
+# The advance-purchase price curve: log-linear interpolation between knots, so the
+# shape (flat T+45..T+21, gentle rise to T+7, steep inside T+3) is data, not code.
+lead_time_knots:
+  - { days_before_departure: 90, multiplier: 0.96 }
+  - { days_before_departure: 45, multiplier: 1.00 }
+  - { days_before_departure: 21, multiplier: 1.05 }
+  - { days_before_departure: 14, multiplier: 1.12 }
+  - { days_before_departure: 7,  multiplier: 1.32 }
+  - { days_before_departure: 3,  multiplier: 1.62 }
+  - { days_before_departure: 1,  multiplier: 2.10 }
+  - { days_before_departure: 0,  multiplier: 2.45 }
+
+# Day-of-week effect on the TRAVEL date. Friday and Sunday peaks; Tuesday/Wednesday
+# troughs — the classic Indian domestic weekly pattern.
+dow_multipliers:
+  mon: 1.02
+  tue: 0.95
+  wed: 0.94
+  thu: 1.00
+  fri: 1.12
+  sat: 1.00
+  sun: 1.10
+
+# Demand surges around festival dates. Dates are approximate SCENARIO dates for the
+# generated window (mid-2026 onward); verify against a real holiday calendar before
+# any reuse outside the synthetic scenario.
+festivals:
+  - { name: "Independence Day weekend", date: 2026-08-15, surge: 1.25, days_before: 1, days_after: 1 }
+  - { name: "Raksha Bandhan",           date: 2026-08-28, surge: 1.30, days_before: 2, days_after: 1 }
+  - { name: "Onam",                     date: 2026-08-26, surge: 1.25, days_before: 2, days_after: 2 }
+  - { name: "Ganesh Chaturthi",         date: 2026-09-14, surge: 1.25, days_before: 1, days_after: 2 }
+  - { name: "Dussehra",                 date: 2026-10-20, surge: 1.45, days_before: 3, days_after: 2 }
+  - { name: "Diwali",                   date: 2026-11-08, surge: 1.80, days_before: 4, days_after: 3 }
+
+# Nested fare buckets. Bucket k is priced (1+price_step)^k over the filed fare and
+# closes for good around close_days_mu[k] days before departure (earlier when demand
+# is high). A departure with every bucket closed is sold out: no quote is emitted,
+# which is exactly the genuinely-missing-observation behaviour the cleaning layer
+# must survive.
+buckets:
+  count: 8
+  price_step: 0.10
+  close_days_mu: [45.0, 30.0, 21.0, 14.0, 9.0, 5.0, 2.0, 0.0]
+  close_days_sigma: 4.0
+  demand_sensitivity: 0.8
+
+# Pretend sales channels. Codes MUST keep the synthetic_ prefix (schema-enforced).
+sources:
+  - code: synthetic_airline
+    display_name: "Synthetic airline direct channel"
+    convenience_fee_inr: 0.0
+  - code: synthetic_ota
+    display_name: "Synthetic OTA channel"
+    convenience_fee_inr: 349.0
+
+collection:
+  # One probe per basket advance window, denser inside the walk-up band.
+  advance_days_grid: [1, 2, 5, 10, 18, 26, 45, 75]
+  flights_per_route_carrier: 1
+  carriers_per_route_min: 3
+  carriers_per_route_max: 5
+  collection_hour_ist: 6
+
+# Deliberate defects, injected at known places and recorded in the ground-truth file
+# so tests can assert the watchdog actually catches them.
+anomalies:
+  - { kind: PRICE_SPIKE,        count: 12, magnitude: 8.0 }    # one-off scrape gone wrong
+  - { kind: FAT_FINGER,         count: 8,  magnitude: 10.0 }   # decimal slip: fare / 10
+  - { kind: STALE_REPEAT,       count: 6,  magnitude: 1.0, run_length_days: 6 }
+  - { kind: COMPONENT_MISMATCH, count: 10, magnitude: 1500.0 } # total != base+tax+UDF+fee

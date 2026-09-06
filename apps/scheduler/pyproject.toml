@@ -1,0 +1,19 @@
+[project]
+name = "apix-scheduler"
+version = "0.1.0"
+description = "APIx orchestration — Prefect 3 flows for collection, cleaning and index runs"
+requires-python = "==3.12.*"
+dependencies = [
+    "apix-core",
+    "apix-collector",              # daily_sweep drives the same spiders as collect-once
+    "prefect==3.8.5",
+    "redis==8.1.0",                 # builds the redis client the flow hands to PolicyEngine
+    "sqlalchemy==2.0.52",           # persists collection_run/fare_quote rows per cell
+]
+
+[build-system]
+requires = ["hatchling==1.28.0"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/apix_scheduler"]

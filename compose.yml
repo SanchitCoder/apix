@@ -1,0 +1,168 @@
+# APIx local and staging stack.
+#
+# `make up` brings this up, waits for every healthcheck, then runs the one-shot migrate
+# service. Named volumes so a restart keeps data; `docker compose down -v` discards it.
+
+name: apix
+
+x-common-env: &common-env
+  APIX_ENV: ${APIX_ENV:-local}
+  APIX_LOG_LEVEL: ${APIX_LOG_LEVEL:-INFO}
+  APIX_LOG_FORMAT: ${APIX_LOG_FORMAT:-json}
+  APIX_DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-apix}:${POSTGRES_PASSWORD:-apix}@postgres:5432/${POSTGRES_DB:-apix}
+  APIX_DATABASE_SYNC_URL: postgresql+psycopg2://${POSTGRES_USER:-apix}:${POSTGRES_PASSWORD:-apix}@postgres:5432/${POSTGRES_DB:-apix}
+  APIX_REDIS_URL: redis://redis:6379/0
+  APIX_PREFECT_API_URL: http://prefect:4200/api
+  APIX_SECRET_KEY: ${APIX_SECRET_KEY:-dev-only-not-a-secret}
+
+services:
+  postgres:
+    # TimescaleDB on PostgreSQL 16. fare_quote is a hypertable on collected_at.
+    image: timescale/timescaledb:2.17.2-pg16
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-apix}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-apix}
+      POSTGRES_DB: ${POSTGRES_DB:-apix}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      # Runs once on first init: gives Prefect its own database so its orchestration
+      # tables never appear in the APIx schema Alembic manages.
+      - ./infra/docker/postgres-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-apix} -d ${POSTGRES_DB:-apix}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+    restart: unless-stopped
+
+  redis:
+    image: redis:7.4-alpine
+    command: ["redis-server", "--save", "60", "1", "--appendonly", "no"]
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
+    restart: unless-stopped
+
+  migrate:
+    # One-shot: runs Alembic to head and exits. Behind a profile so `compose up` does not
+    # start it — a container that exits by design cannot satisfy `--wait`. `make up`
+    # invokes it explicitly between the datastores and the services, because a schema
+    # change is a deliberate step, not a side-effect of a deploy.
+    #
+    # No healthcheck: there is nothing to keep healthy. It runs, it exits, it is done.
+    profiles: ["migrate"]
+    build:
+      context: .
+      dockerfile: infra/docker/api.Dockerfile
+    environment: *common-env
+    command: ["alembic", "upgrade", "head"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  api:
+    build:
+      context: .
+      dockerfile: infra/docker/api.Dockerfile
+    environment:
+      <<: *common-env
+      APIX_API_CORS_ORIGINS: http://localhost:5173
+    command:
+      - uvicorn
+      - apix_api.main:app
+      - --host
+      - "0.0.0.0"
+      - --port
+      - "8000"
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/healthz', timeout=3).status == 200 else 1)"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+    restart: unless-stopped
+
+  collector:
+    build:
+      context: .
+      dockerfile: infra/docker/collector.Dockerfile
+    environment: *common-env
+    # Idle by default. Collection is driven by Prefect, never by container start:
+    # a container restart must not fire off requests at a source website.
+    command: ["python", "-c", "import time; time.sleep(2**31)"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import apix_collector"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  prefect:
+    image: prefecthq/prefect:3.8.5-python3.12
+    command: ["prefect", "server", "start", "--host", "0.0.0.0", "--port", "4200"]
+    environment:
+      PREFECT_API_DATABASE_CONNECTION_URL: postgresql+asyncpg://${POSTGRES_USER:-apix}:${POSTGRES_PASSWORD:-apix}@postgres:5432/prefect
+      PREFECT_API_URL: http://prefect:4200/api
+      PREFECT_SERVER_API_HOST: 0.0.0.0
+    ports:
+      - "127.0.0.1:4200:4200"
+    volumes:
+      - prefectdata:/root/.prefect
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:4200/api/health', timeout=3).status == 200 else 1)"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      dockerfile: infra/docker/web.Dockerfile
+    environment:
+      VITE_APIX_API_URL: http://localhost:8000
+    ports:
+      - "127.0.0.1:5173:8080"
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  redisdata:
+  prefectdata:

@@ -1,0 +1,85 @@
+# APIx workspace root.
+#
+# This is a uv workspace. The root project is a virtual (non-packaged) aggregator
+# that exists only to pin the toolchain and pull the members into one lockfile and
+# one virtualenv. All runnable code lives in the members.
+#
+# Every dependency is pinned to an exact version (== not >=). Adding a dependency
+# requires stating why in the commit message — see CLAUDE.md.
+
+[project]
+name = "apix-workspace"
+version = "0.1.0"
+description = "APIx — real-time airfare price index for India (workspace root)"
+requires-python = "==3.12.*"
+dependencies = [
+    "apix-core",
+    "apix-api",
+    "apix-collector",
+    "apix-scheduler",
+]
+
+[dependency-groups]
+# Dev tooling. Never installed into a production image.
+dev = [
+    "pytest==9.1.1",
+    "pytest-cov==7.1.0",
+    "pytest-asyncio==1.4.0",
+    "hypothesis==6.167.1",           # property-based tests for index maths (Phase 3)
+    "schemathesis==4.25.2",          # contract-tests the OpenAPI document
+    "testcontainers==4.15.0",        # throwaway Postgres for model/migration tests
+    "fakeredis==2.37.1",             # in-process Redis for token-bucket tests
+    "ruff==0.16.6",
+    "mypy==2.3.1",
+    "pre-commit==4.6.2",
+    "types-PyYAML==6.0.12.20260815",
+    "lupa==2.8",                     # lets fakeredis execute the rate-limiter Lua script
+    "matplotlib==3.11.1",            # docs/plot_synthetic_curves.py — dev-only plotting
+]
+
+[tool.uv]
+default-groups = ["dev"]
+
+[tool.uv.workspace]
+members = [
+    "packages/apix_core",
+    "apps/api",
+    "apps/collector",
+    "apps/scheduler",
+]
+
+[tool.uv.sources]
+apix-core = { workspace = true }
+apix-api = { workspace = true }
+apix-collector = { workspace = true }
+apix-scheduler = { workspace = true }
+
+[tool.pytest.ini_options]
+minversion = "9.0"
+testpaths = ["tests"]
+asyncio_mode = "auto"
+addopts = [
+    "-q",
+    "--strict-markers",
+    "--strict-config",
+]
+markers = [
+    "integration: requires a container runtime (Postgres/Redis). Skipped when absent.",
+    "slow: takes more than a couple of seconds.",
+]
+filterwarnings = ["error::DeprecationWarning:apix_core.*"]
+
+[tool.coverage.run]
+branch = true
+source = ["apix_core"]
+omit = ["*/__main__.py"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+    "@overload",
+]

@@ -1,0 +1,77 @@
+# APIx index method — config/method.yaml
+#
+# The method, expressed as data. Changing anything here changes the published number,
+# so this file is hashed and the hash is stamped onto every index_run. Re-running a
+# (snapshot_id, config_hash) pair must reproduce the output byte for byte.
+#
+# docs/methodology.md is GENERATED from this file. Do not hand-edit that document.
+
+method_version: "2026.1"
+description: >-
+  Multilateral, quality-adjusted airfare price index for Indian domestic routes,
+  intended to augment the Transport sub-group of the CPI. Elementary aggregates are
+  computed per (route, advance-purchase window, carrier type); a rolling-window
+  GEKS-Tornqvist index is estimated over those aggregates and spliced on the movement.
+
+# Reference period for the price level, and the value the index takes there.
+price_reference_period: "2026-01"
+index_reference_value: 100.0
+
+# Lowest level, below the level at which weights exist.
+# Jevons: geometric mean of price relatives. Standard for a sample without quantities,
+# passes the time-reversal test, and is the ILO/Eurostat default for such strata.
+elementary_formula: jevons
+
+# Airfares are a textbook case for a multilateral method: the set of available
+# itineraries churns constantly, so a bilateral chained index accumulates drift.
+# See docs/adr/0002-why-multilateral-index.md.
+multilateral_method: geks_tornqvist
+
+window:
+  length_periods: 13   # 13 months: a full year plus the comparison month
+  frequency: M
+
+# Movement splice: extend the published series by the most recent period-on-period
+# movement from the new window. Keeps the series non-revisable at the splice point.
+splice_method: movement
+
+quality_adjustment:
+  enabled: true
+  model: time_dummy_hedonic
+  # Characteristics entering the hedonic regression. Each must be an actual column on
+  # fare_quote_clean — a test asserts this, because a characteristic no cleaner produces
+  # would otherwise surface as a KeyError in the middle of an index run.
+  #
+  # refundable and baggage_included are collected on fare_quote and are strong price
+  # determinants, but fare_quote_clean does not carry them as columns. They travel in
+  # quality_vector for now. Promoting them to columns is a Phase 2 migration plus an
+  # entry here, not a change to this list alone.
+  columns:
+    - advance_days
+    - dep_hour_bucket
+    - stops
+    - carrier_iata
+  min_observations: 30
+
+# What to do about a missing elementary cell. Any imputation writes is_imputed = true
+# and records imputation_method on the row — never a silent carry-forward.
+imputation_rule: targeted_mean
+
+outlier_rules:
+  - name: log_price_mad
+    method: median_absolute_deviation
+    threshold: 5.0
+    applies_to: total_fare
+  - name: relative_price_jump
+    method: period_on_period_log_ratio
+    threshold: 2.5
+    applies_to: total_fare
+  - name: implausible_low_fare
+    method: absolute_floor_inr
+    threshold: 500.0
+    applies_to: total_fare
+
+# Publication thresholds. A cell below these is suppressed and recorded as suppressed,
+# not quietly dropped.
+min_quotes_per_cell: 5
+min_coverage_pct: 60.0

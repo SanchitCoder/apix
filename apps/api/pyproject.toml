@@ -1,0 +1,19 @@
+[project]
+name = "apix-api"
+version = "0.1.0"
+description = "APIx FastAPI service — public statistical API (OpenAPI 3.1 + SDMX-JSON 2.0)"
+requires-python = "==3.12.*"
+dependencies = [
+    "apix-core",
+    "fastapi==0.141.1",
+    "uvicorn==0.52.4",
+    "orjson==3.12.0",             # fast JSON for SDMX payloads
+    "prometheus-client==0.26.0",  # /metrics exposition
+]
+
+[build-system]
+requires = ["hatchling==1.28.0"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/apix_api"]

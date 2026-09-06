@@ -1,0 +1,59 @@
+{
+  "searchId": "IGO-DEL-BOM-20260904-fixture",
+  "itineraries": [
+    {
+      "flightNumber": "6E2341",
+      "carrier": "6E",
+      "departure": { "airport": "DEL", "dateTime": "2026-09-18T06:15:00" },
+      "arrival": { "airport": "BOM", "dateTime": "2026-09-18T08:25:00" },
+      "stops": 0,
+      "fareOptions": [
+        {
+          "brand": "SAVER",
+          "cabin": "ECONOMY",
+          "baseFare": 3450.00,
+          "taxes": 890.00,
+          "udf": 100.00,
+          "totalFare": 4440.00,
+          "currency": "INR",
+          "seatsRemaining": 6,
+          "refundable": false,
+          "baggageIncluded": true
+        },
+        {
+          "brand": "FLEXI_PLUS",
+          "cabin": "ECONOMY",
+          "baseFare": 4900.00,
+          "taxes": 990.00,
+          "udf": 100.00,
+          "totalFare": 5990.00,
+          "currency": "INR",
+          "seatsRemaining": 9,
+          "refundable": true,
+          "baggageIncluded": true
+        }
+      ]
+    },
+    {
+      "flightNumber": "6E5108",
+      "carrier": "6E",
+      "departure": { "airport": "DEL", "dateTime": "2026-09-18T14:40:00" },
+      "arrival": { "airport": "BOM", "dateTime": "2026-09-18T16:50:00" },
+      "stops": 0,
+      "fareOptions": [
+        {
+          "brand": "SAVER",
+          "cabin": "ECONOMY",
+          "baseFare": 3990.00,
+          "taxes": 910.00,
+          "udf": 100.00,
+          "totalFare": 5000.00,
+          "currency": "INR",
+          "seatsRemaining": 2,
+          "refundable": false,
+          "baggageIncluded": true
+        }
+      ]
+    }
+  ]
+}

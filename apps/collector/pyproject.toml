@@ -1,0 +1,24 @@
+[project]
+name = "apix-collector"
+version = "0.1.0"
+description = "APIx collectors — Scrapy spiders (static) and Playwright drivers (JS-rendered)"
+requires-python = "==3.12.*"
+dependencies = [
+    "apix-core",
+    "scrapy==2.18.0",
+    "playwright==1.62.0",
+    "httpx==0.28.1",              # robots.txt / ToS fetches inside the PolicyEngine
+    "parsel==1.11.0",             # CSS/XPath selectors for rendered-page mappers (transitive
+                                   # via scrapy already; pinned directly since apix_collector
+                                   # imports it itself in mappers.cleartrip)
+    "redis==8.1.0",               # builds the real redis client apix_collector.cli hands to
+                                   # PolicyEngine (already a transitive dep of apix-core)
+    "sqlalchemy==2.0.52",         # apix_collector.run persists collection_run/fare_quote rows
+]
+
+[build-system]
+requires = ["hatchling==1.28.0"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/apix_collector"]

@@ -1,0 +1,29 @@
+[project]
+name = "apix-core"
+version = "0.1.0"
+description = "APIx shared library: data model, config schemas, policy engine, index maths"
+requires-python = "==3.12.*"
+dependencies = [
+    "sqlalchemy==2.0.52",         # typed ORM; the single definition of the data model
+    "alembic==1.19.1",            # forward-only migrations
+    "asyncpg==0.31.0",            # async driver used by the API
+    "psycopg2-binary==2.9.12",    # sync driver used by Alembic and the collector
+    "greenlet==3.5.5",            # required by SQLAlchemy asyncio bridge
+    "pydantic==2.13.5",
+    "pydantic-settings==2.15.0",  # env-var settings with validation
+    "pyyaml==6.0.3",              # config/*.yaml loaders
+    "structlog==26.1.0",          # structured JSON logging, run_id on every line
+    "redis==8.1.0",               # rate-limit token buckets
+    "numpy==2.5.2",
+    "pandas==3.0.5",
+    "statsmodels==0.15.0",
+    "scikit-learn==1.9.0",
+    "httpx==0.28.1",              # the ONLY HTTP client; imported solely by apix_core.policy
+]
+
+[build-system]
+requires = ["hatchling==1.28.0"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/apix_core"]

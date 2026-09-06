@@ -1,0 +1,54 @@
+# Secrets — never commit. Only .env.example is tracked.
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+build/
+dist/
+.eggs/
+
+# Tooling caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.hypothesis/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+
+# Node / web
+node_modules/
+apps/web/dist/
+apps/web/.vite/
+apps/web/playwright-report/
+apps/web/test-results/
+*.tsbuildinfo
+
+# Editors / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Local data — collected payloads and generated artefacts never enter git
+data/
+var/
+*.sqlite3
+docs/openapi.json
+docs/methodology.md
+
+# Captured drift payloads are evidence for whoever fixes the mapper, not source —
+# the directory itself is tracked (.gitkeep) so apix_collector.drift always has
+# somewhere to write.
+fixtures/drift/*
+!fixtures/drift/.gitkeep

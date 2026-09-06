@@ -1,0 +1,194 @@
+# APIx sources — config/sources.yaml
+#
+# One entry per site or feed APIx may touch, carrying the full compliance position.
+# This file is reviewed by a human; the PolicyEngine reads the database that this file
+# seeds, and refuses any request it has not cleared.
+#
+# Rules encoded in SourcesConfig and enforced here:
+#   * enabled: true requires tos_verdict: PERMITTED and a legal_basis.
+#   * AMBIGUOUS is treated as PROHIBITED until a human resolves it.
+#   * NOT_REVIEWED means no one has looked yet. It cannot be collected from.
+#
+# Every real source below ships disabled with tos_verdict: NOT_REVIEWED. Phase 2 turns
+# a source on only after counsel has reviewed its terms and the review is recorded here
+# with a date. Nothing is enabled by writing YAML alone.
+
+version: "2026.1"
+
+sources:
+  # ---------------------------------------------------------------- fixtures ----
+  # The recorded-response source. The only one enabled by default: it makes no network
+  # request at all (loopback only — see apix_collector.fixtureserver), so every test
+  # and every local run has something legal to read.
+  #
+  # tos_reviewed_at is ours to renew, unlike every other source below: this is not a
+  # licence granted by a third party, it is APIx's own fixture-serving convention, so
+  # "review" here means "an APIx maintainer re-affirms the convention still holds" —
+  # bump the date whenever it is touched, the same PolicyEngine review-age rule that
+  # protects the real sources still applies to it.
+  - code: fixture_replay
+    display_name: "Recorded fixture replay"
+    domain: localhost
+    source_type: OFFICIAL
+    enabled: true
+    policy:
+      robots_url: null
+      allowed_paths: ["/fixtures/"]
+      disallowed_paths: []
+      crawl_delay_s: 0.0
+      max_requests_per_hour: 100000
+      tos_url: "https://example.org/apix/fixtures-licence"
+      tos_reviewed_at: 2026-09-04T00:00:00Z
+      tos_verdict: PERMITTED
+      legal_basis: FIXTURE
+
+  # ------------------------------------------------------- official statistics ----
+  - code: dgca_traffic
+    display_name: "DGCA — monthly domestic traffic statistics"
+    domain: dgca.gov.in
+    source_type: OFFICIAL
+    enabled: false
+    policy:
+      robots_url: "https://www.dgca.gov.in/robots.txt"
+      allowed_paths: ["/digigov-portal/"]
+      disallowed_paths: []
+      crawl_delay_s: 5.0
+      max_requests_per_hour: 60
+      tos_url: "https://www.dgca.gov.in/digigov-portal/?page=termsAndConditions"
+      tos_reviewed_at: null
+      tos_verdict: NOT_REVIEWED
+      legal_basis: null
+
+  # --------------------------------------------------------- airline websites ----
+  - code: airline_indigo
+    display_name: "IndiGo"
+    domain: goindigo.in
+    source_type: AIRLINE
+    enabled: false
+    policy:
+      robots_url: "https://www.goindigo.in/robots.txt"
+      allowed_paths: []
+      disallowed_paths: ["/booking/", "/manage-booking/", "/check-in/"]
+      crawl_delay_s: 10.0
+      max_requests_per_hour: 120
+      tos_url: "https://www.goindigo.in/information/terms-and-conditions.html"
+      tos_reviewed_at: null
+      tos_verdict: NOT_REVIEWED
+      legal_basis: null
+
+  - code: airline_air_india
+    display_name: "Air India"
+    domain: airindia.com
+    source_type: AIRLINE
+    enabled: false
+    policy:
+      robots_url: "https://www.airindia.com/robots.txt"
+      allowed_paths: []
+      disallowed_paths: ["/booking/", "/my-trips/"]
+      crawl_delay_s: 10.0
+      max_requests_per_hour: 120
+      tos_url: "https://www.airindia.com/in/en/terms-and-conditions.html"
+      tos_reviewed_at: null
+      tos_verdict: NOT_REVIEWED
+      legal_basis: null
+
+  - code: airline_akasa
+    display_name: "Akasa Air"
+    domain: akasaair.com
+    source_type: AIRLINE
+    enabled: false
+    policy:
+      robots_url: "https://www.akasaair.com/robots.txt"
+      allowed_paths: []
+      disallowed_paths: ["/booking/"]
+      crawl_delay_s: 10.0
+      max_requests_per_hour: 60
+      tos_url: "https://www.akasaair.com/terms-and-conditions"
+      tos_reviewed_at: null
+      tos_verdict: NOT_REVIEWED
+      legal_basis: null
+
+  - code: airline_spicejet
+    display_name: "SpiceJet"
+    domain: spicejet.com
+    source_type: AIRLINE
+    enabled: false
+    policy:
+      robots_url: "https://www.spicejet.com/robots.txt"
+      allowed_paths: []
+      disallowed_paths: ["/booking/"]
+      crawl_delay_s: 10.0
+      max_requests_per_hour: 60
+      tos_url: "https://www.spicejet.com/conditionsofcarriage"
+      tos_reviewed_at: null
+      tos_verdict: NOT_REVIEWED
+      legal_basis: null
+
+  # ------------------------------------------------------------------- OTAs ----
+  - code: ota_makemytrip
+    display_name: "MakeMyTrip"
+    domain: makemytrip.com
+    source_type: OTA
+    enabled: false
+    policy:
+      robots_url: "https://www.makemytrip.com/robots.txt"
+      allowed_paths: []
+      disallowed_paths: ["/flight/search", "/api/"]
+      crawl_delay_s: 15.0
+      max_requests_per_hour: 60
+      tos_url: "https://www.makemytrip.com/legal/user_agreement.html"
+      tos_reviewed_at: null
+      tos_verdict: NOT_REVIEWED
+      legal_basis: null
+
+  - code: ota_cleartrip
+    display_name: "Cleartrip"
+    domain: cleartrip.com
+    source_type: OTA
+    enabled: false
+    policy:
+      robots_url: "https://www.cleartrip.com/robots.txt"
+      allowed_paths: []
+      disallowed_paths: ["/flights/results", "/api/"]
+      crawl_delay_s: 15.0
+      max_requests_per_hour: 60
+      tos_url: "https://www.cleartrip.com/legal/user-agreement"
+      tos_reviewed_at: null
+      tos_verdict: NOT_REVIEWED
+      legal_basis: null
+
+  # ------------------------------------------------------------- metasearch ----
+  - code: meta_google_flights
+    display_name: "Google Flights"
+    domain: google.com
+    source_type: METASEARCH
+    enabled: false
+    policy:
+      robots_url: "https://www.google.com/robots.txt"
+      allowed_paths: []
+      disallowed_paths: ["/travel/flights"]
+      crawl_delay_s: 30.0
+      max_requests_per_hour: 30
+      tos_url: "https://policies.google.com/terms"
+      tos_reviewed_at: null
+      tos_verdict: NOT_REVIEWED
+      legal_basis: null
+
+  # ------------------------------------------------------------ licensed feed ----
+  # Placeholder for a contracted GDS feed. Enabled only once a signed agreement exists,
+  # at which point legal_basis becomes CONTRACTUAL.
+  - code: gds_partner_feed
+    display_name: "Licensed GDS fare feed (contract pending)"
+    domain: partner-feed.example.net
+    source_type: GDS
+    enabled: false
+    policy:
+      robots_url: null
+      allowed_paths: ["/v1/fares"]
+      disallowed_paths: []
+      crawl_delay_s: 0.5
+      max_requests_per_hour: 3600
+      tos_url: null
+      tos_reviewed_at: null
+      tos_verdict: NOT_REVIEWED
+      legal_basis: null
