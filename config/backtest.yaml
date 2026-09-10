@@ -1,0 +1,21 @@
+# APIx back-test harness — config/backtest.yaml
+#
+# Scores APIx route/national index values against published DGCA monthly average
+# fares. reporting_window_days has a hard floor of 30 (see
+# apix_core.config.backtest); the window actually used for a given run is always
+# reported in docs/backtest.md alongside this configured value, since real history may
+# be shorter than configured.
+#
+# As of this file's writing, db/seeds/dgca_fares/ is empty and dgca_fare_reference is
+# an empty table — see docs/data-sources.md. `make backtest` still generates a report;
+# it honestly shows zero scored periods until a real DGCA average-fare extract is
+# loaded.
+
+version: "2026.1"
+description: >-
+  Back-test scoring parameters: reporting window, minimum periods required before a
+  correlation is reported, and which basket routes to score.
+
+reporting_window_days: 90
+min_periods_for_correlation: 5
+routes: []

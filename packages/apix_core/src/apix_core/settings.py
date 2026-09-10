@@ -50,6 +50,8 @@ class Settings(BaseSettings):
 
     redis_url: str = "redis://localhost:6379/0"
     redis_rate_limit_db: int = Field(default=1, ge=0, le=15)
+    redis_cache_db: int = Field(default=2, ge=0, le=15)
+    api_cache_ttl_s: int = Field(default=60, ge=0)
 
     proxy_enabled: bool = False
     proxy_pool_url: str | None = None

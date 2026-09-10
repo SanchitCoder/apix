@@ -1,7 +1,9 @@
 # APIx — see CLAUDE.md for the definition of done.
 #
-# Targets marked "Phase N" are deliberate stubs. This session scaffolds contracts only;
-# lint and test are fully wired and must genuinely pass.
+# `index-run` and the API it feeds are database-backed: `seed-synthetic` writes real
+# fare_quote rows, `index-run` computes and publishes real index_run/index_value rows
+# from them, and `up` serves those through the real API. `collect-once` remains
+# fixture-only (no live source is called by any target here).
 
 SHELL := /bin/bash
 .DEFAULT_GOAL := help
@@ -11,7 +13,9 @@ COMPOSE ?= docker compose
 COVERAGE_MIN ?= 80
 
 .PHONY: help install up down logs migrate seed load-dgca lint fmt typecheck test \
-        test-integration openapi collect-once index-run seed-synthetic synthetic-curves clean
+        test-integration openapi collect-once index-run seed-synthetic synthetic-curves \
+        nowcast-run watchdog-probe watchdog-report backtest load-atf load-cpi \
+        load-dgca-fares clean
 
 help: ## Show this help
 	@grep -hE '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) \
@@ -78,8 +82,10 @@ openapi: ## Write the OpenAPI 3.1 document the front end builds against
 collect-once: ## Single collection run against fixtures. Usage: make collect-once ROUTE=DEL-BOM
 	$(UV) run python -m apix_collector collect-once --route $(ROUTE)
 
-index-run: ## Compute the index for a date. Usage: make index-run DATE=2026-09-01
-	@echo "index-run DATE=$(DATE): not implemented — Phase 3 wires the index maths"
+INDEX_RUN_DAYS ?= 21
+
+index-run: ## Compute the index for a date over the synthetic dataset. Usage: make index-run DATE=2026-09-01 [INDEX_RUN_DAYS=21]
+	$(UV) run python -m apix_scheduler.index_run --date $(DATE) --days $(INDEX_RUN_DAYS)
 
 DAYS ?= 90
 
@@ -88,6 +94,31 @@ seed-synthetic: ## Generate the labelled synthetic dataset. Usage: make seed-syn
 
 synthetic-curves: ## Plot the synthetic lead-time/seasonality curves to docs/synthetic/
 	$(UV) run python docs/plot_synthetic_curves.py
+
+# ------------------------------------------------------------- nowcast / watchdog ----
+
+nowcast-run: ## Nowcast the CPI air-fare bridge for a target period. Usage: make nowcast-run DATE=2026-09-08 TARGET=2026-09
+	$(UV) run python -m apix_scheduler.nowcast_run --date $(DATE) --target-period $(TARGET)
+
+watchdog-probe: ## Run the personalised-pricing probe (low frequency; see config/watchdog.yaml)
+	$(UV) run python -m apix_scheduler.watchdog_run probe
+
+watchdog-report: ## Surge + sell-out + rail comparison report (computed on demand, logged only)
+	$(UV) run python -m apix_scheduler.watchdog_run report
+
+BACKTEST_WINDOW_DAYS ?= 90
+
+backtest: ## Regenerate docs/backtest.md from real index_value vs dgca_fare_reference. Usage: make backtest [BACKTEST_WINDOW_DAYS=90]
+	$(UV) run python docs/generate_backtest_report.py --window-days $(BACKTEST_WINDOW_DAYS)
+
+load-atf: ## Load an ATF price extract. Usage: make load-atf FILE=db/seeds/atf/2026-09.csv NOTE="IOCL notification, 2026-09-01, <url>"
+	$(UV) run python -m apix_scheduler.atf_loader $(FILE) --source-note "$(NOTE)"
+
+load-cpi: ## Load a CPI air-fare index extract. Usage: make load-cpi FILE=db/seeds/cpi/2026-07.csv NOTE="MoSPI release, July 2026, <url>"
+	$(UV) run python -m apix_scheduler.cpi_loader $(FILE) --source-note "$(NOTE)"
+
+load-dgca-fares: ## Load a DGCA/cited-benchmark average-fare extract. Usage: make load-dgca-fares FILE=db/seeds/dgca_fares/2026-07.csv NOTE="<citation>"
+	$(UV) run python -m apix_scheduler.dgca_fare_loader $(FILE) --source-note "$(NOTE)"
 
 clean: ## Remove build and test artefacts
 	rm -rf .pytest_cache .ruff_cache .mypy_cache coverage.xml .coverage htmlcov

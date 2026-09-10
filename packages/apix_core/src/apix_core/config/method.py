@@ -30,12 +30,19 @@ class MultilateralMethod(StrEnum):
 
 
 class SpliceMethod(StrEnum):
-    """How consecutive windows are joined into a continuous series."""
+    """How consecutive windows are joined into a continuous series.
+
+    Whichever method is configured, splicing only ever appends the newest period: a
+    published value is never revised by rolling the window forward (CLAUDE.md
+    principle 4). See :mod:`apix_core.index.splice` for the formulas.
+    """
 
     MOVEMENT = "movement"
     WINDOW = "window"
     HALF = "half"
-    MEAN = "mean"  # mean splice (Diewert & Fox)
+    MEAN = "mean"  # mean splice (Diewert & Fox) — the pure-function default
+    FBEW = "fbew"  # fixed base expanding window
+    FBMW = "fbmw"  # fixed base moving window
 
 
 class ImputationRule(StrEnum):
@@ -78,6 +85,33 @@ class QualityAdjustment(BaseModel):
     columns: list[str] = Field(min_length=1)
     model: str = Field(default="time_dummy_hedonic", max_length=64)
     min_observations: int = Field(default=30, ge=1)
+    # Below this R-squared, apix_core.index.hedonic refuses to publish the
+    # quality-adjusted index and raises rather than returning a number nobody checked.
+    min_r_squared: float = Field(default=0.3, ge=0.0, le=1.0)
+
+
+class BookingProfile(BaseModel):
+    """Weights combining the advance-purchase windows into one route index.
+
+    ``weights`` must be sourced from real booking-profile data (ticket sales by
+    advance-purchase window). Until that data exists, the shipped ``config/method.yaml``
+    uses a stated, documented assumption — never a silent guess — and ``source`` must
+    say so explicitly. See ``docs/methodology.md``.
+    """
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    source: str = Field(min_length=1, max_length=200)
+    weights: dict[str, float] = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def _weights_are_a_valid_distribution(self) -> BookingProfile:
+        if any(w < 0 for w in self.weights.values()):
+            raise ValueError("booking_profile weights must be non-negative")
+        total = sum(self.weights.values())
+        if abs(total - 1.0) > 1e-6:
+            raise ValueError(f"booking_profile weights must sum to 1.0, got {total}")
+        return self
 
 
 class MethodConfigFile(BaseModel):
@@ -95,6 +129,7 @@ class MethodConfigFile(BaseModel):
     window: WindowConfig
     splice_method: SpliceMethod
     quality_adjustment: QualityAdjustment
+    booking_profile: BookingProfile
     imputation_rule: ImputationRule
     outlier_rules: list[OutlierRule] = Field(default_factory=list)
 
@@ -119,6 +154,7 @@ class MethodConfigFile(BaseModel):
 
 
 __all__ = [
+    "BookingProfile",
     "ElementaryFormula",
     "ImputationRule",
     "MethodConfigFile",

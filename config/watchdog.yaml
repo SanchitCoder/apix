@@ -1,0 +1,37 @@
+# APIx watchdog — config/watchdog.yaml
+#
+# Parameters for the personalised-pricing probe, surge detection, sell-out velocity,
+# and rail-fare substitution comparison. See apix_core.config.watchdog for the schema
+# and docs/personalisation-probe.md for the probe's method and limitations.
+#
+# The personalised-pricing probe is deliberately low frequency: max_runs_per_day is
+# capped by the schema itself (hard ceiling of 6), and geographies vary request
+# headers only — apix_collector does not proxy real geo-IP traffic.
+
+version: "2026.1"
+description: >-
+  Phase-1 watchdog parameters. None of these checks can change a published
+  index_value; they are diagnostic signals, run through PolicyEngine like every other
+  outbound request this repo makes.
+
+personalisation_probe:
+  n_sessions: 6
+  cookie_states: ["none", "existing_thin", "existing_thick"]
+  ua_classes: ["desktop_chrome", "mobile_safari"]
+  geographies: ["in_delhi", "in_mumbai"]
+  routes: ["DEL-BOM", "BOM-DEL"]
+  max_runs_per_day: 2
+  min_interval_hours: 12.0
+
+surge:
+  baseline_window_days: 90
+  band_width_k: 3.0
+  min_history_periods: 14
+
+sellout:
+  lookback_days: 30
+  min_group_size: 5
+
+rail:
+  enabled: false
+  corridor_map: {}

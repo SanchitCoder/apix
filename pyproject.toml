@@ -35,6 +35,7 @@ dev = [
     "types-PyYAML==6.0.12.20260815",
     "lupa==2.8",                     # lets fakeredis execute the rate-limiter Lua script
     "matplotlib==3.11.1",            # docs/plot_synthetic_curves.py — dev-only plotting
+    "openapi-spec-validator==0.7.2", # validates docs/openapi.json is real OpenAPI 3.1
 ]
 
 [tool.uv]

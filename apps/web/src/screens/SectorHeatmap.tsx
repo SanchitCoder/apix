@@ -10,6 +10,8 @@ import { useMemo } from "react";
 import { useHeatmap } from "../api/hooks";
 import { ChartPanel } from "../components/ChartPanel";
 import { EChart } from "../components/EChart";
+import { HeatmapArt } from "../components/illustrations";
+import { PageHeader } from "../components/PageHeader";
 import { formatPeriod } from "../lib/format";
 import { useTheme } from "../theme/ThemeContext";
 import { baseOption, chartText, divergingRamp, gridDefaults, tooltipDefaults } from "../theme/echartsTheme";
@@ -128,23 +130,31 @@ export default function SectorHeatmap() {
   }, [derived]);
 
   return (
-    <ChartPanel
-      title="Sector heatmap"
-      subtitle="Each route's colour is relative to its own baseline, not to other routes."
-      isLoading={heatmap.isLoading}
-      error={heatmap.error}
-      isEmpty={derived?.cells.length === 0}
-      dataStatus={heatmap.data?.meta.data_status}
-      table={table}
-    >
-      {option !== null && (
-        <EChart
-          option={option}
-          height={420}
-          ariaLabel="Heatmap of routes by period, coloured by deviation from each route's own baseline fare"
-          nav={nav}
-        />
-      )}
-    </ChartPanel>
+    <div className="flex flex-col gap-6">
+      <PageHeader
+        title="Sector heatmap"
+        subtitle="Routes by period, coloured by deviation from each route's own baseline — its own volatility, independent of its price level relative to other routes."
+        art={<HeatmapArt />}
+      />
+
+      <ChartPanel
+        title="Sector heatmap"
+        subtitle="Each route's colour is relative to its own baseline, not to other routes."
+        isLoading={heatmap.isLoading}
+        error={heatmap.error}
+        isEmpty={derived?.cells.length === 0}
+        dataStatus={heatmap.data?.meta.data_status}
+        table={table}
+      >
+        {option !== null && (
+          <EChart
+            option={option}
+            height={420}
+            ariaLabel="Heatmap of routes by period, coloured by deviation from each route's own baseline fare"
+            nav={nav}
+          />
+        )}
+      </ChartPanel>
+    </div>
   );
 }

@@ -16,7 +16,9 @@ from sqlalchemy import (
     BigInteger,
     CheckConstraint,
     Date,
+    DateTime,
     ForeignKey,
+    ForeignKeyConstraint,
     Index,
     Numeric,
     String,
@@ -88,10 +90,15 @@ class IndexRun(Base):
     status: Mapped[RunStatus] = mapped_column(
         pg_enum(RunStatus, "run_status_enum"), nullable=False, server_default=text("'PENDING'")
     )
+    # Null = draft/pre-release: visible only to researcher/official callers. Set to
+    # computed_at the moment a run finishes SUCCEEDED or PARTIAL — there is no separate
+    # editorial release step today, so "computed" and "published" are the same event.
+    released_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     __table_args__ = (
         Index("ix_index_run_vintage_date", "vintage_date"),
         Index("ix_index_run_snapshot_method", "snapshot_id", "method_config_id"),
+        Index("ix_index_run_released_at", "released_at"),
     )
 
 
@@ -175,4 +182,39 @@ class RevisionLog(Base):
     __table_args__ = (
         UniqueConstraint("series_id", "period", "revised_at", name="uq_revision_log_event"),
         Index("ix_revision_log_series_period", "series_id", "period"),
+    )
+
+
+class IndexValueQuote(Base):
+    """Explicit lineage: which cleaned quotes fed one published ``index_value``.
+
+    Without this table, "what did this quote contribute to" could only be answered by
+    inference (matching a quote's route/window/period against a series' dimensions),
+    which is a guess, not a trace. This table is written in the same transaction as the
+    ``index_value`` row it points at, so principle 1 — every published number resolvable
+    back to the quotes behind it — holds structurally rather than by convention.
+
+    Keyed by ``clean_id`` rather than the raw quote, because an imputed
+    ``fare_quote_clean`` row (no real quote behind it) can still contribute to a
+    published value and must still be traceable to *something* — its imputation method
+    and quality vector, via ``fare_quote_clean`` itself.
+    """
+
+    __tablename__ = "index_value_quote"
+
+    index_run_id: Mapped[uuid.UUID] = mapped_column(primary_key=True)
+    series_id: Mapped[uuid.UUID] = mapped_column(primary_key=True)
+    period: Mapped[date] = mapped_column(Date, primary_key=True)
+    clean_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("fare_quote_clean.id", ondelete="RESTRICT"), primary_key=True
+    )
+
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["index_run_id", "series_id", "period"],
+            ["index_value.index_run_id", "index_value.series_id", "index_value.period"],
+            ondelete="CASCADE",
+            name="fk_index_value_quote_index_value",
+        ),
+        Index("ix_index_value_quote_clean_id", "clean_id"),
     )

@@ -18,6 +18,7 @@ import base64
 import binascii
 import hashlib
 import json
+from collections.abc import Callable, Sequence
 from typing import Annotated, Any
 
 from fastapi import Query
@@ -96,10 +97,10 @@ class Page[ItemT](BaseModel):
 class ResponseMeta(BaseModel):
     """Metadata attached to every APIx response.
 
-    ``data_status`` is not decoration. Until Phase 3 wires the database in, every
-    endpoint returns ``EXAMPLE_ONLY``: the shape is real, the numbers are placeholders
-    and are labelled as such so that nothing downstream can mistake them for published
-    statistics.
+    ``data_status`` is not decoration: ``PUBLISHED`` means a released index_run,
+    ``PROVISIONAL`` a draft one visible only to a researcher/official caller, and
+    ``PREVIEW`` a what-if method run that is never a published statistic — so nothing
+    downstream can mistake one for another.
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -127,6 +128,37 @@ class ResponseMeta(BaseModel):
 
 
 Page.model_rebuild()
+
+
+def paginate_in_memory[ItemT](
+    items: Sequence[ItemT],
+    *,
+    cursor: str | None,
+    limit: int,
+    query_sig: str,
+    position_of: Callable[[ItemT], dict[str, Any]],
+) -> tuple[list[ItemT], PageInfo]:
+    """Slice an already-fetched, already-ordered sequence into one page.
+
+    Every list endpoint's underlying data is small enough (the route basket, one
+    series' history) to fetch in full and page in memory rather than push keyset
+    pagination into every query; the cursor contract seen by a client — opaque,
+    bound to the filter parameters — is identical either way.
+    """
+    start = 0
+    if cursor is not None:
+        position = decode_cursor(cursor, query_sig)
+        start = len(items)
+        for index, item in enumerate(items):
+            if position_of(item) == position:
+                start = index + 1
+                break
+    page = list(items[start : start + limit])
+    has_more = start + limit < len(items)
+    next_cursor = encode_cursor(position_of(page[-1]), query_sig) if page and has_more else None
+    return page, PageInfo(
+        limit=limit, returned=len(page), has_more=has_more, next_cursor=next_cursor
+    )
 
 
 # Shared query parameters, so every list endpoint documents pagination identically.

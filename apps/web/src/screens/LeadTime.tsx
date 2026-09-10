@@ -10,6 +10,8 @@ import { useMemo, useState } from "react";
 import { useBasket, useCarriers, useLeadtime } from "../api/hooks";
 import { ChartPanel } from "../components/ChartPanel";
 import { EChart } from "../components/EChart";
+import { LeadTimeArt } from "../components/illustrations";
+import { PageHeader } from "../components/PageHeader";
 import { formatINR } from "../lib/format";
 import { useTheme } from "../theme/ThemeContext";
 import {
@@ -172,6 +174,12 @@ export default function LeadTime() {
 
   return (
     <div className="flex flex-col gap-6">
+      <PageHeader
+        title="Lead-time curve"
+        subtitle="Price against days-to-departure, with the inflection point marked — the window past which price stops falling as departure gets further away."
+        art={<LeadTimeArt />}
+      />
+
       <div className="flex flex-wrap items-end gap-4 rounded-2xl border border-edge bg-surface p-5 shadow-card">
         <div>
           <label htmlFor="lt-route" className="block text-sm font-medium text-ink-2">

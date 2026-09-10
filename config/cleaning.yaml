@@ -1,0 +1,71 @@
+# APIx cleaning-pipeline parameters — config/cleaning.yaml
+#
+# Governs apix_core.clean: how one raw fare_quote row becomes one fare_quote_clean row
+# (deduplication, decomposition, outlier screening, sell-out imputation) and the data-
+# quality gates run before every index run. This is separate from config/method.yaml,
+# which governs the index maths computed on top of the clean table.
+#
+# Schema: apix_core.config.cleaning.CleaningConfig (validated on load).
+
+version: "2026.1"
+description: >-
+  Cleaning parameters for the initial route basket. Bounds are deliberately generous
+  guardrails against gross data-entry and scraping defects (a decimal slip, a scrape
+  that captured the wrong page); fine-grained screening is the job of the outlier rules,
+  not these gates.
+
+dedup:
+  # Same physical flight, different sources: their displayed departure times can differ
+  # by a few minutes (site-side rounding, timezone handling quirks). Wider than that and
+  # they are treated as different flights rather than merged.
+  dep_time_tolerance_minutes: 15
+
+decomposition:
+  # GST on economy-class domestic air tickets (Notification No. 11/2017 - Central Tax
+  # (Rate), as amended). The basket collects fare_class=ECONOMY by default, so this is
+  # the rate implied by a non-itemising source's total_fare.
+  tax_rate: 0.05
+
+outliers:
+  active_rule: mad_log
+  # Modified z-score threshold on log(total_fare); 3.5 is the conventional Iglewicz &
+  # Hoaglin cutoff for the MAD rule.
+  mad_threshold: 3.5
+  # Classic Tukey fence multiplier for the IQR rule.
+  iqr_k: 1.5
+  # A (route, advance_days, travel_date) cell smaller than this is never screened: too
+  # few points to distinguish a genuine outlier from a small sample.
+  min_cell_size: 5
+
+imputation:
+  sellout_group_columns: [route_id, advance_days, carrier_type]
+  # A group smaller than this cannot support a cell-mean; the gap is left unresolved
+  # rather than imputed from too little evidence.
+  min_group_size: 3
+
+quality_gates:
+  # base_fare plausibility per route-distance band. Loose on purpose: these exist to
+  # catch a scrape gone wrong, not to do the job of the outlier rules above.
+  distance_bands:
+    - name: short          # < 600 km, e.g. DEL-BOM-adjacent short hops
+      max_km: 600
+      base_fare_min_inr: 500
+      base_fare_max_inr: 25000
+    - name: medium          # 600-1500 km, most of the basket
+      max_km: 1500
+      base_fare_min_inr: 800
+      base_fare_max_inr: 55000
+    - name: long             # > 1500 km, e.g. metro-to-Northeast/Andaman routes
+      max_km: null
+      base_fare_min_inr: 1200
+      base_fare_max_inr: 70000
+  # taxes as a share of total_fare. Wide enough to cover the fee mix across sources
+  # (UDF and convenience fee both count against total_fare, diluting the tax share);
+  # narrow enough to catch a component swapped into the wrong field.
+  tax_share_min: 0.01
+  tax_share_max: 0.20
+  # Below this, a (route, advance_days) cell's data quality is suspect enough to block
+  # the index run outright — distinct from, and lower than, method.yaml's
+  # min_coverage_pct, which governs whether a cell is *published*, not whether the
+  # input data is trustworthy.
+  coverage_floor_pct: 40.0

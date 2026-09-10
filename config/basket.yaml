@@ -3,11 +3,13 @@
 # The 50 directional city-pairs the index is computed over, and the
 # advance-purchase windows each pair is stratified into.
 #
-# dgca_pax_share is null on EVERY route, deliberately.
-# Phase 2 populates these from the DGCA monthly domestic traffic release.
-# They are not estimated, interpolated or guessed here: an invented weight
-# would propagate into a published national statistic. BasketConfig rejects a
-# partially-populated weight vector, so this file is all-null until it is all-real.
+# dgca_pax_share is populated from a real DGCA monthly domestic traffic release —
+# see db/seeds/dgca/2026-07.csv for the extract and its provenance, and
+# docs/data-sources.md for how to load a newer month. They are not estimated,
+# interpolated or guessed: an invented weight would propagate into a published
+# national statistic. BasketConfig rejects a partially-populated weight vector, so
+# this file is all-null until it is all-real (dgca_loader.load_dgca_release enforces
+# that on every write).
 #
 # Routes are directional. DEL-BOM and BOM-DEL are separate observations because
 # they are separately priced.
@@ -53,300 +55,300 @@ routes:
   - code: "DEL-BOM"
     origin: "DEL"
     dest: "BOM"
-    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    dgca_pax_share: 0.00974581  # DGCA 2026-07 monthly traffic release
     active_from: 2026-01-01
     active_to: null
   - code: "BOM-DEL"
     origin: "BOM"
     dest: "DEL"
-    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    dgca_pax_share: 0.00938263  # DGCA 2026-07 monthly traffic release
     active_from: 2026-01-01
     active_to: null
   - code: "DEL-BLR"
     origin: "DEL"
     dest: "BLR"
-    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    dgca_pax_share: 0.00803856  # DGCA 2026-07 monthly traffic release
     active_from: 2026-01-01
     active_to: null
   - code: "BLR-DEL"
     origin: "BLR"
     dest: "DEL"
-    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    dgca_pax_share: 0.00789668  # DGCA 2026-07 monthly traffic release
     active_from: 2026-01-01
     active_to: null
   - code: "BOM-BLR"
     origin: "BOM"
     dest: "BLR"
-    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    dgca_pax_share: 0.00630831  # DGCA 2026-07 monthly traffic release
     active_from: 2026-01-01
     active_to: null
   - code: "BLR-BOM"
     origin: "BLR"
     dest: "BOM"
-    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    dgca_pax_share: 0.00584404  # DGCA 2026-07 monthly traffic release
     active_from: 2026-01-01
     active_to: null
   - code: "DEL-CCU"
     origin: "DEL"
     dest: "CCU"
-    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    dgca_pax_share: 0.00451372  # DGCA 2026-07 monthly traffic release
     active_from: 2026-01-01
     active_to: null
   - code: "CCU-DEL"
     origin: "CCU"
     dest: "DEL"
-    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    dgca_pax_share: 0.00470123  # DGCA 2026-07 monthly traffic release
     active_from: 2026-01-01
     active_to: null
   - code: "BLR-HYD"
     origin: "BLR"
     dest: "HYD"
-    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    dgca_pax_share: 0.00340092  # DGCA 2026-07 monthly traffic release
     active_from: 2026-01-01
     active_to: null
   - code: "HYD-BLR"
     origin: "HYD"
     dest: "BLR"
-    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    dgca_pax_share: 0.00349767  # DGCA 2026-07 monthly traffic release
     active_from: 2026-01-01
     active_to: null
   - code: "DEL-MAA"
     origin: "DEL"
     dest: "MAA"
-    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    dgca_pax_share: 0.00351696  # DGCA 2026-07 monthly traffic release
     active_from: 2026-01-01
     active_to: null
   - code: "MAA-DEL"
     origin: "MAA"
     dest: "DEL"
-    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    dgca_pax_share: 0.00332670  # DGCA 2026-07 monthly traffic release
     active_from: 2026-01-01
     active_to: null
   - code: "DEL-HYD"
     origin: "DEL"
     dest: "HYD"
-    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    dgca_pax_share: 0.00511038  # DGCA 2026-07 monthly traffic release
     active_from: 2026-01-01
     active_to: null
   - code: "HYD-DEL"
     origin: "HYD"
     dest: "DEL"
-    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    dgca_pax_share: 0.00503171  # DGCA 2026-07 monthly traffic release
     active_from: 2026-01-01
     active_to: null
   - code: "BOM-MAA"
     origin: "BOM"
     dest: "MAA"
-    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    dgca_pax_share: 0.00356934  # DGCA 2026-07 monthly traffic release
     active_from: 2026-01-01
     active_to: null
   - code: "MAA-BOM"
     origin: "MAA"
     dest: "BOM"
-    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    dgca_pax_share: 0.00319962  # DGCA 2026-07 monthly traffic release
     active_from: 2026-01-01
     active_to: null
   - code: "BLR-MAA"
     origin: "BLR"
     dest: "MAA"
-    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    dgca_pax_share: 0.00268667  # DGCA 2026-07 monthly traffic release
     active_from: 2026-01-01
     active_to: null
   - code: "MAA-BLR"
     origin: "MAA"
     dest: "BLR"
-    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    dgca_pax_share: 0.00259425  # DGCA 2026-07 monthly traffic release
     active_from: 2026-01-01
     active_to: null
   - code: "DEL-PNQ"
     origin: "DEL"
     dest: "PNQ"
-    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    dgca_pax_share: 0.00473527  # DGCA 2026-07 monthly traffic release
     active_from: 2026-01-01
     active_to: null
   - code: "PNQ-DEL"
     origin: "PNQ"
     dest: "DEL"
-    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    dgca_pax_share: 0.00441013  # DGCA 2026-07 monthly traffic release
     active_from: 2026-01-01
     active_to: null
   - code: "BOM-CCU"
     origin: "BOM"
     dest: "CCU"
-    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    dgca_pax_share: 0.00275001  # DGCA 2026-07 monthly traffic release
     active_from: 2026-01-01
     active_to: null
   - code: "CCU-BOM"
     origin: "CCU"
     dest: "BOM"
-    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    dgca_pax_share: 0.00287064  # DGCA 2026-07 monthly traffic release
     active_from: 2026-01-01
     active_to: null
   - code: "DEL-AMD"
     origin: "DEL"
     dest: "AMD"
-    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    dgca_pax_share: 0.00363805  # DGCA 2026-07 monthly traffic release
     active_from: 2026-01-01
     active_to: null
   - code: "AMD-DEL"
     origin: "AMD"
     dest: "DEL"
-    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    dgca_pax_share: 0.00345104  # DGCA 2026-07 monthly traffic release
     active_from: 2026-01-01
     active_to: null
   - code: "DEL-GOI"
     origin: "DEL"
     dest: "GOI"
-    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    dgca_pax_share: 0.00160737  # DGCA 2026-07 monthly traffic release
     active_from: 2026-01-01
     active_to: null
   - code: "GOI-DEL"
     origin: "GOI"
     dest: "DEL"
-    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    dgca_pax_share: 0.00162566  # DGCA 2026-07 monthly traffic release
     active_from: 2026-01-01
     active_to: null
   - code: "BOM-HYD"
     origin: "BOM"
     dest: "HYD"
-    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    dgca_pax_share: 0.00331729  # DGCA 2026-07 monthly traffic release
     active_from: 2026-01-01
     active_to: null
   - code: "HYD-BOM"
     origin: "HYD"
     dest: "BOM"
-    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    dgca_pax_share: 0.00319774  # DGCA 2026-07 monthly traffic release
     active_from: 2026-01-01
     active_to: null
   - code: "BLR-CCU"
     origin: "BLR"
     dest: "CCU"
-    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    dgca_pax_share: 0.00283935  # DGCA 2026-07 monthly traffic release
     active_from: 2026-01-01
     active_to: null
   - code: "CCU-BLR"
     origin: "CCU"
     dest: "BLR"
-    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    dgca_pax_share: 0.00294027  # DGCA 2026-07 monthly traffic release
     active_from: 2026-01-01
     active_to: null
   - code: "DEL-COK"
     origin: "DEL"
     dest: "COK"
-    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    dgca_pax_share: 0.00162566  # DGCA 2026-07 monthly traffic release
     active_from: 2026-01-01
     active_to: null
   - code: "COK-DEL"
     origin: "COK"
     dest: "DEL"
-    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    dgca_pax_share: 0.00139003  # DGCA 2026-07 monthly traffic release
     active_from: 2026-01-01
     active_to: null
   - code: "DEL-SXR"
     origin: "DEL"
     dest: "SXR"
-    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    dgca_pax_share: 0.00294114  # DGCA 2026-07 monthly traffic release
     active_from: 2026-01-01
     active_to: null
   - code: "SXR-DEL"
     origin: "SXR"
     dest: "DEL"
-    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    dgca_pax_share: 0.00299231  # DGCA 2026-07 monthly traffic release
     active_from: 2026-01-01
     active_to: null
   - code: "DEL-PAT"
     origin: "DEL"
     dest: "PAT"
-    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    dgca_pax_share: 0.00221561  # DGCA 2026-07 monthly traffic release
     active_from: 2026-01-01
     active_to: null
   - code: "PAT-DEL"
     origin: "PAT"
     dest: "DEL"
-    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    dgca_pax_share: 0.00232207  # DGCA 2026-07 monthly traffic release
     active_from: 2026-01-01
     active_to: null
   - code: "DEL-LKO"
     origin: "DEL"
     dest: "LKO"
-    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    dgca_pax_share: 0.00211102  # DGCA 2026-07 monthly traffic release
     active_from: 2026-01-01
     active_to: null
   - code: "LKO-DEL"
     origin: "LKO"
     dest: "DEL"
-    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    dgca_pax_share: 0.00216223  # DGCA 2026-07 monthly traffic release
     active_from: 2026-01-01
     active_to: null
   - code: "BOM-GOI"
     origin: "BOM"
     dest: "GOI"
-    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    dgca_pax_share: 0.00193997  # DGCA 2026-07 monthly traffic release
     active_from: 2026-01-01
     active_to: null
   - code: "GOI-BOM"
     origin: "GOI"
     dest: "BOM"
-    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    dgca_pax_share: 0.00184588  # DGCA 2026-07 monthly traffic release
     active_from: 2026-01-01
     active_to: null
   - code: "BLR-COK"
     origin: "BLR"
     dest: "COK"
-    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    dgca_pax_share: 0.00224524  # DGCA 2026-07 monthly traffic release
     active_from: 2026-01-01
     active_to: null
   - code: "COK-BLR"
     origin: "COK"
     dest: "BLR"
-    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    dgca_pax_share: 0.00217573  # DGCA 2026-07 monthly traffic release
     active_from: 2026-01-01
     active_to: null
   - code: "CCU-MAA"
     origin: "CCU"
     dest: "MAA"
-    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    dgca_pax_share: 0.00187576  # DGCA 2026-07 monthly traffic release
     active_from: 2026-01-01
     active_to: null
   - code: "MAA-CCU"
     origin: "MAA"
     dest: "CCU"
-    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    dgca_pax_share: 0.00182076  # DGCA 2026-07 monthly traffic release
     active_from: 2026-01-01
     active_to: null
   - code: "DEL-GAU"
     origin: "DEL"
     dest: "GAU"
-    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    dgca_pax_share: 0.00239612  # DGCA 2026-07 monthly traffic release
     active_from: 2026-01-01
     active_to: null
   - code: "GAU-DEL"
     origin: "GAU"
     dest: "DEL"
-    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    dgca_pax_share: 0.00248241  # DGCA 2026-07 monthly traffic release
     active_from: 2026-01-01
     active_to: null
   - code: "BOM-AMD"
     origin: "BOM"
     dest: "AMD"
-    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    dgca_pax_share: 0.00270526  # DGCA 2026-07 monthly traffic release
     active_from: 2026-01-01
     active_to: null
   - code: "AMD-BOM"
     origin: "AMD"
     dest: "BOM"
-    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    dgca_pax_share: 0.00278014  # DGCA 2026-07 monthly traffic release
     active_from: 2026-01-01
     active_to: null
   - code: "HYD-MAA"
     origin: "HYD"
     dest: "MAA"
-    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    dgca_pax_share: 0.00192705  # DGCA 2026-07 monthly traffic release
     active_from: 2026-01-01
     active_to: null
   - code: "MAA-HYD"
     origin: "MAA"
     dest: "HYD"
-    dgca_pax_share: null   # Phase 2: DGCA monthly traffic release
+    dgca_pax_share: 0.00188663  # DGCA 2026-07 monthly traffic release
     active_from: 2026-01-01
     active_to: null

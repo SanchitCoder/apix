@@ -1,0 +1,26 @@
+# APIx API access tiers — config/access.yaml
+#
+# Rate limits per role. Public needs no API key; researcher and official are granted by
+# an api_key row (packages/apix_core/models/auth.py). Enforced by the TokenBucketLimiter
+# already used for outbound collection rate limiting (apix_core.policy.ratelimit),
+# keyed by role + api-key-or-client-ip instead of by source domain.
+#
+# Schema: apix_core.config.access.AccessConfig (validated on load).
+
+version: "2026.1"
+description: >-
+  Starting limits for the three access tiers. Public is sized for dashboard/browser
+  traffic; researcher and official are sized for bulk/automated consumers (MoSPI, RBI
+  integrations) and can be raised per key without a deploy.
+
+public:
+  requests_per_minute: 60
+  burst: 10
+
+researcher:
+  requests_per_minute: 600
+  burst: 50
+
+official:
+  requests_per_minute: 6000
+  burst: 200

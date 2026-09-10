@@ -1,17 +1,13 @@
 /**
- * Dark/light theme state. The resolved mode is stamped on <html data-theme="...">,
- * which the CSS custom properties in index.css key off; charts read the same resolution
- * through `tokens`.
+ * Theme state — light only. The dashboard shell (navy header/sidebar, white cards) is a
+ * fixed light design with no dark-mode toggle exposed anywhere in the UI, so this no
+ * longer follows the OS preference or a stored value: doing so previously flipped every
+ * `bg-surface` panel to near-black for anyone on a dark system theme, and skewed chart
+ * colours to the dark palette against a light background. `index.css` defines light
+ * values only now. Re-introduce preference switching only alongside a real toggle.
  */
 
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { createContext, useContext, useEffect, useMemo } from "react";
 import type { ReactNode } from "react";
 import { tokensFor } from "./tokens";
 import type { ThemeMode, ThemeTokens } from "./tokens";
@@ -27,52 +23,24 @@ interface ThemeContextValue {
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
-const STORAGE_KEY = "apix-theme";
-
-function storedPreference(): ThemePreference {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw === "light" || raw === "dark" || raw === "system") return raw;
-  } catch {
-    /* storage unavailable — fall through to system */
-  }
-  return "system";
-}
-
-function systemMode(): ThemeMode {
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-}
+const MODE: ThemeMode = "light";
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [preference, setPreferenceState] = useState<ThemePreference>(storedPreference);
-  const [system, setSystem] = useState<ThemeMode>(systemMode);
-
   useEffect(() => {
-    const media = window.matchMedia("(prefers-color-scheme: dark)");
-    const onChange = () => setSystem(systemMode());
-    media.addEventListener("change", onChange);
-    return () => media.removeEventListener("change", onChange);
-  }, []);
-
-  const mode: ThemeMode = preference === "system" ? system : preference;
-
-  useEffect(() => {
-    document.documentElement.dataset["theme"] = mode;
-    document.documentElement.style.colorScheme = mode;
-  }, [mode]);
-
-  const setPreference = useCallback((next: ThemePreference) => {
-    setPreferenceState(next);
-    try {
-      localStorage.setItem(STORAGE_KEY, next);
-    } catch {
-      /* storage unavailable — preference lasts the session */
-    }
+    document.documentElement.dataset["theme"] = MODE;
+    document.documentElement.style.colorScheme = MODE;
   }, []);
 
   const value = useMemo<ThemeContextValue>(
-    () => ({ preference, mode, tokens: tokensFor(mode), setPreference }),
-    [preference, mode, setPreference],
+    () => ({
+      preference: MODE,
+      mode: MODE,
+      tokens: tokensFor(MODE),
+      setPreference: () => {
+        /* no-op until a real dark-mode toggle exists */
+      },
+    }),
+    [],
   );
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;

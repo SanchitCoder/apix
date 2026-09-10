@@ -22,6 +22,7 @@ export type CoverageResponse = Schemas["CoverageResponse"];
 export type SourceCoverage = Schemas["SourceCoverage"];
 export type MethodMetadata = Schemas["MethodMetadata"];
 export type BasketMetadata = Schemas["BasketMetadata"];
+export type CarrierOut = Schemas["CarrierOut"];
 export type MethodOverrides = Schemas["MethodOverrides"];
 export type MethodPreviewResponse = Schemas["MethodPreviewResponse"];
 export type ProvenanceResponse = Schemas["ProvenanceResponse"];
@@ -53,6 +54,22 @@ export class ApiProblem extends Error {
 }
 
 export const api = createClient<paths>({ baseUrl: BASE_URL });
+
+/**
+ * Local-dev-only: attaches an API key from the environment so authenticated endpoints
+ * (method preview, provenance, quotes, exports) work against a local backend. Never set
+ * in a real deployment — `VITE_APIX_API_KEY` is not meant to carry a production key past
+ * a developer's own `.env`, which is git-ignored.
+ */
+const DEV_API_KEY = import.meta.env.VITE_APIX_API_KEY as string | undefined;
+if (DEV_API_KEY !== undefined && DEV_API_KEY !== "") {
+  api.use({
+    onRequest({ request }) {
+      request.headers.set("X-API-Key", DEV_API_KEY);
+      return request;
+    },
+  });
+}
 
 interface FetchOutcome<T> {
   data?: T;

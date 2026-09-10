@@ -2,9 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Theme tokens — mirrors src/theme/tokens.ts. The ThemeProvider stamps
-   data-theme on <html>; there is no unstamped state after hydration, but the
-   media query keeps the pre-hydration paint right for system-dark users. */
+/* Theme tokens — mirrors src/theme/tokens.ts (LIGHT only). There is no dark-mode
+   toggle anywhere in this UI, so no dark variant is defined here — an OS/browser set
+   to dark mode must never be able to flip any card to near-black on its own. If a
+   real dark-mode toggle is ever added, reintroduce the dark block guarded strictly by
+   an explicit `:root[data-theme="dark"]` selector, never by a bare prefers-color-scheme
+   media query. */
 :root {
   color-scheme: light;
   --page: #eef2f8;
@@ -45,82 +48,6 @@
   --shadow-card: 0 1px 2px rgba(16, 24, 51, 0.04), 0 10px 24px -14px rgba(16, 24, 51, 0.18);
   --shadow-card-hover: 0 2px 4px rgba(16, 24, 51, 0.06), 0 16px 32px -14px rgba(16, 24, 51, 0.24);
   --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    color-scheme: dark;
-    --page: #0d0d0d;
-    --surface: #1a1a19;
-    --surface-raised: #232322;
-    --ink: #ffffff;
-    --ink-secondary: #c3c2b7;
-    --ink-muted: #898781;
-    --grid: #2c2c2a;
-    --axis: #383835;
-    --border: rgba(255, 255, 255, 0.1);
-    --accent: #3987e5;
-    --accent-ink: #6da7ec;
-    --status-good-ink: #0ca30c;
-    --status-warning-ink: #fab219;
-    --status-serious-ink: #ec835a;
-    --status-critical-ink: #e66767;
-    --focus-ring: #6da7ec;
-
-    --accent-soft: rgba(57, 135, 229, 0.16);
-    --good-soft: rgba(12, 163, 12, 0.16);
-    --warning-soft: rgba(250, 178, 25, 0.16);
-    --serious-soft: rgba(236, 131, 90, 0.16);
-    --critical-soft: rgba(230, 103, 103, 0.16);
-    --table-stripe: #201f1e;
-
-    --navy: #070d1f;
-    --navy-2: #0f1c3f;
-    --on-navy: #f4f7fd;
-    --on-navy-muted: rgba(244, 247, 253, 0.68);
-    --sidebar-bg: #161616;
-    --sidebar-active-bg: rgba(57, 135, 229, 0.16);
-    --sidebar-active-ink: #6da7ec;
-    --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.3), 0 10px 24px -14px rgba(0, 0, 0, 0.6);
-    --shadow-card-hover: 0 2px 4px rgba(0, 0, 0, 0.35), 0 16px 32px -14px rgba(0, 0, 0, 0.7);
-  }
-}
-
-:root[data-theme="dark"] {
-  color-scheme: dark;
-  --page: #0d0d0d;
-  --surface: #1a1a19;
-  --surface-raised: #232322;
-  --ink: #ffffff;
-  --ink-secondary: #c3c2b7;
-  --ink-muted: #898781;
-  --grid: #2c2c2a;
-  --axis: #383835;
-  --border: rgba(255, 255, 255, 0.1);
-  --accent: #3987e5;
-  --accent-ink: #6da7ec;
-  --status-good-ink: #0ca30c;
-  --status-warning-ink: #fab219;
-  --status-serious-ink: #ec835a;
-  --status-critical-ink: #e66767;
-  --focus-ring: #6da7ec;
-
-  --accent-soft: rgba(57, 135, 229, 0.16);
-  --good-soft: rgba(12, 163, 12, 0.16);
-  --warning-soft: rgba(250, 178, 25, 0.16);
-  --serious-soft: rgba(236, 131, 90, 0.16);
-  --critical-soft: rgba(230, 103, 103, 0.16);
-  --table-stripe: #201f1e;
-
-  --navy: #070d1f;
-  --navy-2: #0f1c3f;
-  --on-navy: #f4f7fd;
-  --on-navy-muted: rgba(244, 247, 253, 0.68);
-  --sidebar-bg: #161616;
-  --sidebar-active-bg: rgba(57, 135, 229, 0.16);
-  --sidebar-active-ink: #6da7ec;
-  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.3), 0 10px 24px -14px rgba(0, 0, 0, 0.6);
-  --shadow-card-hover: 0 2px 4px rgba(0, 0, 0, 0.35), 0 16px 32px -14px rgba(0, 0, 0, 0.7);
 }
 
 body {

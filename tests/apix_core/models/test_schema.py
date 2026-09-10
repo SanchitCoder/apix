@@ -22,8 +22,16 @@ EXPECTED_TABLES = {
     "index_run",
     "series",
     "index_value",
+    "index_value_quote",
     "revision_log",
     "nowcast_value",
+    "api_key",
+    "atf_price",
+    "cpi_airfare_index",
+    "dgca_fare_reference",
+    "rail_fare",
+    "personalisation_probe_observation",
+    "dispersion_stat",
 }
 
 

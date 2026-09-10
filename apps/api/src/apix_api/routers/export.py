@@ -2,29 +2,32 @@
 
 CSV because the statisticians who will check this work live in spreadsheets. The header
 row is part of the contract and the file is streamed, so a multi-year request does not
-have to be materialised in memory.
+have to be materialised in memory. Microdata-adjacent: requires a researcher or official
+API key, same as the other drill-down endpoints.
 """
 
 from __future__ import annotations
 
 import csv
 import io
-from collections.abc import Iterator
+from collections.abc import AsyncIterator, Iterator
 from datetime import date
 from typing import Annotated
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
 
-from apix_api.errors import ERROR_RESPONSES
-from apix_api.examples import (
-    EXAMPLE_INDEX_RUN_ID,
-    EXAMPLE_PERIODS,
-    EXAMPLE_SERIES_CODE,
-    EXAMPLE_VALUES,
-)
+from apix_api.auth import RoleDep, require_authenticated
+from apix_api.db import SessionDep  # noqa: TC001
+from apix_api.errors import MICRODATA_ERROR_RESPONSES
+from apix_api.queries import LatestValueRow, get_series_id, latest_values
 
-router = APIRouter(prefix="/v1", tags=["export"], responses=ERROR_RESPONSES)
+router = APIRouter(
+    prefix="/v1",
+    tags=["export"],
+    responses=MICRODATA_ERROR_RESPONSES,
+    dependencies=[Depends(require_authenticated)],
+)
 
 CSV_COLUMNS = (
     "series",
@@ -39,27 +42,27 @@ CSV_COLUMNS = (
 )
 
 
-def _rows(series: str) -> Iterator[list[str]]:
-    """Yield the header and then one row per observation."""
+def _rows(series: str, values: list[LatestValueRow]) -> Iterator[list[str]]:
     yield list(CSV_COLUMNS)
-    for period, value in zip(EXAMPLE_PERIODS, EXAMPLE_VALUES, strict=True):
+    for row in values:
+        released = row["released_at"] is not None
         yield [
             series,
-            period.isoformat(),
-            f"{value:.6f}",
-            "12500",
-            "96.00",
+            row["period"].isoformat(),
+            f"{float(row['value']):.6f}",
+            str(int(row["n_quotes"])),
+            f"{float(row['coverage_pct']):.2f}" if row["coverage_pct"] is not None else "",
             "false",
-            "EXAMPLE_ONLY",
-            EXAMPLE_INDEX_RUN_ID,
-            "EXAMPLE_ONLY",
+            "PUBLISHED" if released else "PROVISIONAL",
+            str(row["index_run_id"]),
+            "PUBLISHED" if released else "PROVISIONAL",
         ]
 
 
-def _stream(series: str) -> Iterator[str]:
+async def _stream(series: str, values: list[LatestValueRow]) -> AsyncIterator[str]:
     buffer = io.StringIO()
     writer = csv.writer(buffer, lineterminator="\n")
-    for row in _rows(series):
+    for row in _rows(series, values):
         writer.writerow(row)
         yield buffer.getvalue()
         buffer.seek(0)
@@ -78,7 +81,9 @@ def _stream(series: str) -> Iterator[str]:
     },
 )
 async def export_csv(
-    series: Annotated[str, Query(max_length=64, examples=["APIX.ALL.M"])] = EXAMPLE_SERIES_CODE,
+    session: SessionDep,
+    role: RoleDep,
+    series: Annotated[str, Query(max_length=64, examples=["APIX.ALL.M"])] = "APIX.ALL.M",
     from_: Annotated[date | None, Query(alias="from", description="Inclusive start.")] = None,
     to: Annotated[date | None, Query(description="Inclusive end.")] = None,
 ) -> StreamingResponse:
@@ -87,12 +92,16 @@ async def export_csv(
     Every row carries ``index_run_id`` and ``data_status``, so a downloaded file remains
     traceable once it has left the API and is sitting in someone's spreadsheet.
     """
+    series_id = await get_series_id(session, series)
+    if series_id is None:
+        raise HTTPException(status_code=404, detail=f"no series is published with code {series!r}")
+    values = await latest_values(session, series_id, role=role, from_period=from_, to_period=to)
+
     filename = f"apix_{series.replace('.', '_')}.csv"
     return StreamingResponse(
-        _stream(series),
+        _stream(series, values),
         media_type="text/csv",
         headers={
             "Content-Disposition": f'attachment; filename="{filename}"',
-            "X-APIx-Data-Status": "EXAMPLE_ONLY",
         },
     )

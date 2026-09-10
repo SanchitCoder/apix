@@ -5,20 +5,24 @@ from __future__ import annotations
 from datetime import date
 from typing import Annotated
 
-from fastapi import APIRouter, Path, Query
+from fastapi import APIRouter, HTTPException, Path, Query
+from sqlalchemy import func, select
+from sqlalchemy.orm import aliased
 
+from apix_api.db import SessionDep  # noqa: TC001
 from apix_api.errors import ERROR_RESPONSES
-from apix_api.examples import EXAMPLE_PERIODS, example_offset, response_meta
+from apix_api.meta import build_meta
 from apix_api.pagination import (
     DEFAULT_PAGE_SIZE,
     CursorParam,
     LimitParam,
     Page,
-    PageInfo,
-    encode_cursor,
+    paginate_in_memory,
     query_signature,
 )
 from apix_api.schemas import RouteSeriesPoint, RouteSummary
+from apix_core.config import load_basket
+from apix_core.models import Airport, FareQuoteClean, Route
 
 router = APIRouter(prefix="/v1", tags=["routes"], responses=ERROR_RESPONSES)
 
@@ -34,6 +38,7 @@ RouteCodePath = Annotated[
 
 @router.get("/routes", summary="Routes in the current basket", response_model=Page[RouteSummary])
 async def list_routes(
+    session: SessionDep,
     basket_version: Annotated[
         str | None, Query(description="Defaults to the basket in force today.")
     ] = None,
@@ -43,48 +48,57 @@ async def list_routes(
 ) -> Page[RouteSummary]:
     """List the basket.
 
-    ``dgca_pax_share`` is null on every route until Phase 2 loads the DGCA release. That
-    null is the honest answer, not a missing field.
+    ``dgca_pax_share`` is null on every route until the DGCA release is loaded into
+    ``config/basket.yaml``. That null is the honest answer, not a missing field.
     """
-    # Coordinates are reference data from db/seeds/airports.csv (OurAirports, CC0),
-    # not placeholders — the corridor map cannot be drawn from invented positions.
-    airports = {
-        "DEL": ("Delhi", 28.555630, 77.095190),
-        "BOM": ("Mumbai", 19.088699, 72.867897),
-        "BLR": ("Bengaluru", 13.197900, 77.706299),
-    }
-    pairs = [("DEL", "BOM"), ("BOM", "DEL"), ("DEL", "BLR"), ("BLR", "DEL")]
-    items = []
-    for origin, dest in pairs:
-        origin_city, origin_lat, origin_lon = airports[origin]
-        dest_city, dest_lat, dest_lon = airports[dest]
-        items.append(
-            RouteSummary(
-                code=f"{origin}-{dest}",
-                origin_iata=origin,
-                origin_city=origin_city,
-                dest_iata=dest,
-                dest_city=dest_city,
-                dgca_pax_share=None,
-                basket_version="2026.1",
-                active_from=date(2026, 1, 1),
-                active_to=None,
-                origin_lat=origin_lat,
-                origin_lon=origin_lon,
-                dest_lat=dest_lat,
-                dest_lon=dest_lon,
-            )
+    basket = load_basket()
+    version = basket_version or basket.basket_version
+
+    origin = aliased(Airport)
+    dest = aliased(Airport)
+    stmt = (
+        select(Route, origin, dest)
+        .join(origin, origin.iata == Route.origin_iata)
+        .join(dest, dest.iata == Route.dest_iata)
+        .where(Route.basket_version == version)
+        .order_by(Route.code)
+    )
+    if active_on is not None:
+        stmt = stmt.where(
+            Route.active_from <= active_on,
+            (Route.active_to.is_(None)) | (Route.active_to > active_on),
         )
+    rows = (await session.execute(stmt)).all()
+
+    items = [
+        RouteSummary(
+            code=route.code,
+            origin_iata=route.origin_iata,
+            origin_city=origin_airport.city,
+            dest_iata=route.dest_iata,
+            dest_city=dest_airport.city,
+            dgca_pax_share=(
+                float(route.dgca_pax_share) if route.dgca_pax_share is not None else None
+            ),
+            basket_version=route.basket_version,
+            active_from=route.active_from,
+            active_to=route.active_to,
+            origin_lat=float(origin_airport.lat) if origin_airport.lat is not None else None,
+            origin_lon=float(origin_airport.lon) if origin_airport.lon is not None else None,
+            dest_lat=float(dest_airport.lat) if dest_airport.lat is not None else None,
+            dest_lon=float(dest_airport.lon) if dest_airport.lon is not None else None,
+        )
+        for route, origin_airport, dest_airport in rows
+    ]
+
     sig = query_signature(basket_version=basket_version, active_on=active_on)
+    page_items, page_info = paginate_in_memory(
+        items, cursor=cursor, limit=limit, query_sig=sig, position_of=lambda r: {"code": r.code}
+    )
     return Page[RouteSummary](
-        items=items,
-        pagination=PageInfo(
-            limit=limit,
-            returned=len(items),
-            has_more=True,
-            next_cursor=encode_cursor({"code": items[-1].code}, sig),
-        ),
-        meta=response_meta(basket_version="2026.1", with_run=False),
+        items=page_items,
+        pagination=page_info,
+        meta=build_meta(basket_version=version, data_status="PUBLISHED"),
     )
 
 
@@ -94,6 +108,7 @@ async def list_routes(
     response_model=Page[RouteSeriesPoint],
 )
 async def get_route_series(
+    session: SessionDep,
     code: RouteCodePath,
     advance_days: Annotated[
         int | None,
@@ -114,41 +129,71 @@ async def get_route_series(
     """Return the fare distribution for one route over time.
 
     Quartiles are returned alongside the mean because an airfare distribution is
-    right-skewed: the mean alone misrepresents what a traveller pays.
-
-    The example payload varies deterministically with ``advance_days`` and ``carrier``
-    so a chart split by either draws distinct, stable lines; a shorter lead time prices
-    higher, as the real curve will. The final period is served ``sold_out`` so the
-    front end's shading has something honest to shade.
+    right-skewed: the mean alone misrepresents what a traveller pays. Grouped by the
+    day fares were observed (``query_date``, derived as ``travel_date - advance_days``)
+    and, when ``advance_days`` is not filtered, reported at the 14-day lead time
+    (the mid-window default the shipped basket documents) rather than blending lead
+    times of very different price levels into one misleading average.
     """
-    lead = advance_days if advance_days is not None else 14
-    # Walk-up fares price highest; the premium tapers with lead time.
-    lead_premium = max(0.0, (60 - lead) * 25.0)
-    carrier_shift = 0.0 if carrier is None else example_offset("route-series", carrier, scale=200)
-    base = 5000.0 + lead_premium + carrier_shift
+    route_id = (
+        await session.execute(select(Route.id).where(Route.code == code))
+    ).scalar_one_or_none()
+    if route_id is None:
+        raise HTTPException(status_code=404, detail=f"no route with code {code!r}")
+
+    effective_advance_days = advance_days if advance_days is not None else 14
+    query_date_expr = (FareQuoteClean.travel_date - FareQuoteClean.advance_days).label("query_date")
+
+    stmt = (
+        select(
+            query_date_expr,
+            func.avg(FareQuoteClean.total_fare).label("mean_fare"),
+            func.percentile_cont(0.5).within_group(FareQuoteClean.total_fare).label("median_fare"),
+            func.percentile_cont(0.25).within_group(FareQuoteClean.total_fare).label("p25_fare"),
+            func.percentile_cont(0.75).within_group(FareQuoteClean.total_fare).label("p75_fare"),
+            func.count(FareQuoteClean.id).label("n_quotes"),
+            func.bool_and(FareQuoteClean.is_imputed).label("sold_out"),
+        )
+        .where(
+            FareQuoteClean.route_id == route_id,
+            FareQuoteClean.advance_days == effective_advance_days,
+            ~FareQuoteClean.is_outlier,
+        )
+        .group_by(query_date_expr)
+        .order_by(query_date_expr)
+    )
+    if carrier is not None:
+        stmt = stmt.where(FareQuoteClean.carrier_iata == carrier)
+    if from_ is not None:
+        stmt = stmt.where(query_date_expr >= from_)
+    if to is not None:
+        stmt = stmt.where(query_date_expr <= to)
+
+    rows = (await session.execute(stmt)).all()
     items = [
         RouteSeriesPoint(
             period=period,
-            advance_days=lead,
+            advance_days=effective_advance_days,
             carrier_iata=carrier,
-            mean_fare=round(base + example_offset("fare", code, str(period), scale=150), 0),
-            median_fare=round(base * 0.96, 0),
-            p25_fare=round(base * 0.8, 0),
-            p75_fare=round(base * 1.2, 0),
-            n_quotes=250,
-            sold_out=period == EXAMPLE_PERIODS[-1] and lead <= 3,
+            mean_fare=float(mean_fare),
+            median_fare=float(median_fare),
+            p25_fare=float(p25_fare),
+            p75_fare=float(p75_fare),
+            n_quotes=int(n_quotes),
+            sold_out=bool(sold_out),
             currency="INR",
         )
-        for period in EXAMPLE_PERIODS
+        for period, mean_fare, median_fare, p25_fare, p75_fare, n_quotes, sold_out in rows
     ]
+
     sig = query_signature(code=code, advance_days=advance_days, carrier=carrier, from_=from_, to=to)
+    page_items, page_info = paginate_in_memory(
+        items,
+        cursor=cursor,
+        limit=limit,
+        query_sig=sig,
+        position_of=lambda p: {"period": str(p.period)},
+    )
     return Page[RouteSeriesPoint](
-        items=items,
-        pagination=PageInfo(
-            limit=limit,
-            returned=len(items),
-            has_more=False,
-            next_cursor=encode_cursor({"period": str(items[-1].period)}, sig),
-        ),
-        meta=response_meta(method_version="2026.1", basket_version="2026.1"),
+        items=page_items, pagination=page_info, meta=build_meta(data_status="PUBLISHED")
     )

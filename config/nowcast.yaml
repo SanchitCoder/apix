@@ -1,0 +1,31 @@
+# APIx nowcast — config/nowcast.yaml
+#
+# Parameters for the CPI air-fare bridge model, the ATF pass-through estimate, and
+# movement decomposition. See apix_core.config.nowcast for the schema and
+# docs/adr/0004-ols-lagged-bridge-over-midas.md for why OLS-with-lags, not MIDAS, is
+# the phase-1 bridge model.
+#
+# Nothing here can change a published index_value — only nowcast_value rows, which are
+# a modelled estimate and never mistakable for the real index.
+
+version: "2026.1"
+description: >-
+  Phase-1 nowcast parameters: an aggregated-regressor OLS bridge from daily/partial-
+  month APIx to the monthly CPI air-fare item index, a distributed-lag ATF
+  pass-through estimate, and an exact (Bennet) movement decomposition.
+
+bridge_model:
+  kind: ols_lagged
+  n_apix_lags: 2
+  n_cpi_lags: 1
+  min_observations: 24   # two years of monthly observations, once CPI data is loaded
+  ci_level: 0.95
+  robust_cov: HAC
+  hac_maxlags: 3
+
+atf_passthrough:
+  max_lag: 6
+  min_observations: 24
+
+movement_decomposition:
+  sum_tolerance: 1.0e-9

@@ -13,6 +13,8 @@ import { useMemo, useState } from "react";
 import { useBasket, useCarriers, useRouteSeriesBatch, useRoutes, useHeatmap } from "../api/hooks";
 import { ChartPanel } from "../components/ChartPanel";
 import { EChart } from "../components/EChart";
+import { RouteExplorerArt } from "../components/illustrations";
+import { PageHeader } from "../components/PageHeader";
 import { RouteMap } from "../components/RouteMap";
 import { buildCorridors } from "../lib/corridors";
 import { formatINR, formatPeriod } from "../lib/format";
@@ -43,7 +45,10 @@ export default function RouteExplorer() {
       (basket.data?.advance_windows ?? []).map((w) => ({
         key: w.code,
         label: w.label,
-        advanceDays: w.min_days,
+        // The series endpoint restricts to one exact lead time (it isn't a range query),
+        // so a window is represented by its midpoint day rather than its lower bound —
+        // collected quotes cluster near the middle of a window, not its edge.
+        advanceDays: Math.floor((w.min_days + w.max_days) / 2),
       })),
     [basket.data],
   );
@@ -158,6 +163,12 @@ export default function RouteExplorer() {
 
   return (
     <div className="flex flex-col gap-6">
+      <PageHeader
+        title="Route explorer"
+        subtitle="Fare curves for one route at a time, split by advance-purchase window or by carrier, with sold-out days shaded and corridors coloured by momentum."
+        art={<RouteExplorerArt />}
+      />
+
       <div className="flex flex-wrap items-end gap-4 rounded-2xl border border-edge bg-surface p-5 shadow-card">
         <div>
           <label htmlFor="route-select" className="block text-sm font-medium text-ink-2">

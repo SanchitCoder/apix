@@ -52,6 +52,32 @@ quality_adjustment:
     - stops
     - carrier_iata
   min_observations: 30
+  # apix_core.index.hedonic refuses to publish below this R-squared rather than
+  # returning a quality-adjusted index nobody would trust.
+  min_r_squared: 0.3
+
+# Combines the (route, advance-purchase window) elementary indexes into one route
+# index. THESE WEIGHTS ARE A STATED ASSUMPTION, NOT A MEASUREMENT: no real
+# booking-profile (ticket-sales-by-advance-window) data exists yet for Indian domestic
+# routes. They are a placeholder shape — front-loaded toward closer-in bookings, which
+# is directionally what industry commentary describes for this market — pending a real
+# extract. Phase 2 replaces `source` and `weights` from an actual booking-profile
+# study; until then this section is exactly as auditable as it is honest about being a
+# guess. Keys are advance_windows codes from config/basket.yaml; a test asserts the two
+# files stay in step.
+booking_profile:
+  source: >-
+    STATED ASSUMPTION — not measured. Placeholder shape pending a real
+    booking-profile (ticket sales by advance-purchase window) extract. See
+    docs/methodology.md.
+  weights:
+    AP00_03: 0.22
+    AP04_07: 0.16
+    AP08_14: 0.16
+    AP15_21: 0.14
+    AP22_30: 0.12
+    AP31_60: 0.12
+    AP61_90: 0.08
 
 # What to do about a missing elementary cell. Any imputation writes is_imputed = true
 # and records imputation_method on the row — never a silent carry-forward.

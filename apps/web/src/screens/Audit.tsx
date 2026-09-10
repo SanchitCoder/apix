@@ -19,9 +19,11 @@ import {
   useRevisions,
   useVintage,
 } from "../api/hooks";
+import { AuditArt } from "../components/illustrations";
 import { ChartPanel } from "../components/ChartPanel";
 import { DataStatusBadge } from "../components/badges";
 import { EChart } from "../components/EChart";
+import { PageHeader } from "../components/PageHeader";
 import { formatDate, formatIndex, formatINR, formatPeriod, todayISO } from "../lib/format";
 import { useTheme } from "../theme/ThemeContext";
 import { baseOption, gridDefaults, timeAxis, tooltipDefaults, valueAxis } from "../theme/echartsTheme";
@@ -102,6 +104,12 @@ export default function Audit() {
 
   return (
     <div className="flex flex-col gap-6">
+      <PageHeader
+        title="Audit & provenance"
+        subtitle="Every number is a click away from the evidence it rests on: index value, contributing route indices, cleaned quotes, and each quote's source, timestamp and legal basis."
+        art={<AuditArt />}
+      />
+
       <ChartPanel
         title="APIx headline — click a point to audit it"
         isLoading={headline.isLoading}

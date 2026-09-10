@@ -6,6 +6,9 @@
 *.key
 secrets/
 
+# Local dev process logs/pidfiles written by scripts/dev-backend.sh
+.dev-logs/
+
 # Python
 __pycache__/
 *.py[cod]

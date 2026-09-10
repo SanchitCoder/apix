@@ -121,8 +121,11 @@ def install_error_handlers(app: FastAPI) -> None:
 
 
 # Reusable OpenAPI response declarations so every endpoint documents the same errors.
+# 401 applies to every /v1 path: the auth/rate-limit middleware validates a presented
+# X-API-Key before routing even reaches a public endpoint.
 ERROR_RESPONSES: dict[int | str, dict[str, Any]] = {
     400: {"model": Problem, "description": "Bad request", "content": {PROBLEM_MEDIA_TYPE: {}}},
+    401: {"model": Problem, "description": "Invalid API key", "content": {PROBLEM_MEDIA_TYPE: {}}},
     404: {"model": Problem, "description": "Not found", "content": {PROBLEM_MEDIA_TYPE: {}}},
     422: {
         "model": ValidationProblem,
@@ -131,4 +134,15 @@ ERROR_RESPONSES: dict[int | str, dict[str, Any]] = {
     },
     429: {"model": Problem, "description": "Rate limited", "content": {PROBLEM_MEDIA_TYPE: {}}},
     500: {"model": Problem, "description": "Internal error", "content": {PROBLEM_MEDIA_TYPE: {}}},
+}
+
+# Merged into ERROR_RESPONSES on the routers that gate microdata/draft data behind
+# require_authenticated (quotes, export, provenance, method preview).
+MICRODATA_ERROR_RESPONSES: dict[int | str, dict[str, Any]] = {
+    **ERROR_RESPONSES,
+    403: {
+        "model": Problem,
+        "description": "Microdata or pre-release figures require a researcher/official key",
+        "content": {PROBLEM_MEDIA_TYPE: {}},
+    },
 }

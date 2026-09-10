@@ -12,6 +12,7 @@ import { ApiProblem } from "../api/client";
 import { DataTable } from "./DataTable";
 import type { TableSpec } from "./DataTable";
 import { DataStatusBadge } from "./badges";
+import { IconInbox } from "./icons";
 
 interface ChartPanelProps {
   title: string;
@@ -72,7 +73,10 @@ export function ChartPanel({
     );
   } else if (isEmpty) {
     body = (
-      <div className="flex h-48 flex-col items-center justify-center gap-1 text-sm">
+      <div className="flex h-48 flex-col items-center justify-center gap-2 text-sm">
+        <span className="flex h-10 w-10 items-center justify-center rounded-full bg-raised text-muted">
+          <IconInbox width={20} height={20} />
+        </span>
         <p className="font-medium">No data for this selection</p>
         <p className="text-ink-2">
           {emptyDetail ?? "The API returned an empty result — recorded as such, not a gap."}

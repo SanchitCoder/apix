@@ -93,10 +93,42 @@ export function RouteMap({ corridors, compact = false }: { corridors: CorridorPo
         <title id={titleId}>
           Schematic map of {corridors.length} route corridors, coloured by momentum
         </title>
+        {/* Graticule — reference lines at even fractions of the same lon/lat bounds the
+            corridors themselves are projected against, not a basemap. It gives the eye a
+            sense of scale without claiming a coastline this build has no data for. */}
+        <g aria-hidden="true" opacity={0.5}>
+          {[0.25, 0.5, 0.75].map((f) => (
+            <line
+              key={`v${f}`}
+              x1={PAD + f * (WIDTH - 2 * PAD)}
+              y1={PAD}
+              x2={PAD + f * (WIDTH - 2 * PAD)}
+              y2={height - PAD}
+              stroke={tokens.grid}
+              strokeWidth={1}
+              strokeDasharray="1 5"
+            />
+          ))}
+          {[0.33, 0.66].map((f) => (
+            <line
+              key={`h${f}`}
+              x1={PAD}
+              y1={PAD + f * (height - 2 * PAD)}
+              x2={WIDTH - PAD}
+              y2={PAD + f * (height - 2 * PAD)}
+              stroke={tokens.grid}
+              strokeWidth={1}
+              strokeDasharray="1 5"
+            />
+          ))}
+        </g>
         {corridors.map((c) => {
           const [x1, y1] = project(c.originLat, c.originLon);
           const [x2, y2] = project(c.destLat, c.destLon);
           const color = colorForMomentum(c.momentumPct, ramp);
+          const midX = (x1 + x2) / 2;
+          const midY = (y1 + y2) / 2;
+          const bearing = (Math.atan2(y2 - y1, x2 - x1) * 180) / Math.PI;
           return (
             <g key={c.code}>
               <line
@@ -112,6 +144,13 @@ export function RouteMap({ corridors, compact = false }: { corridors: CorridorPo
                   {c.code}: {formatPct(c.momentumPct)} vs previous period
                 </title>
               </line>
+              {/* A small aircraft mark riding the corridor midpoint, oriented along the
+                  origin-to-destination bearing — the route itself, not a decoration. */}
+              <path
+                d="M-6 0 L5 -3.4 L2 0 L5 3.4 Z"
+                fill={color}
+                transform={`translate(${midX} ${midY}) rotate(${bearing})`}
+              />
             </g>
           );
         })}

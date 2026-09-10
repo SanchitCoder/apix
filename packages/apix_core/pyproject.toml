@@ -19,6 +19,9 @@ dependencies = [
     "statsmodels==0.15.0",
     "scikit-learn==1.9.0",
     "httpx==0.28.1",              # the ONLY HTTP client; imported solely by apix_core.policy
+    "great-expectations==1.22.0", # data-quality gates on fare_quote_clean (apix_core.clean.gates);
+                                   # used only via its in-memory ephemeral/pandas API, no filesystem
+                                   # or network I/O — analytics telemetry is disabled at import time
 ]
 
 [build-system]

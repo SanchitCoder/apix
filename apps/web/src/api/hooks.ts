@@ -173,6 +173,7 @@ export function useMethodPreview(overrides: MethodOverrides) {
 export function useQuotes(route: string, period: string) {
   return useQuery({
     queryKey: ["quotes", route, period],
+    enabled: route !== "",
     queryFn: async () =>
       unwrap(await api.GET("/v1/quotes", { params: { query: { route, period } } })),
   });

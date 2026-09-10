@@ -59,6 +59,75 @@ sources:
       tos_verdict: NOT_REVIEWED
       legal_basis: null
 
+  # These four are documentary only: every one of them is loaded today by a human
+  # extract through apps/scheduler's atf_loader/cpi_loader/dgca_fare_loader (see
+  # docs/data-sources.md), never automated. Listed here anyway per this file's own
+  # rule ("anything not listed here does not enter the system") — a source that only
+  # ever enters via a human-produced CSV is still a source.
+  - code: atf_iocl
+    display_name: "IOCL — ATF price notifications"
+    domain: iocl.com
+    source_type: OFFICIAL
+    enabled: false
+    policy:
+      robots_url: "https://www.iocl.com/robots.txt"
+      allowed_paths: []
+      disallowed_paths: []
+      crawl_delay_s: 5.0
+      max_requests_per_hour: 60
+      tos_url: null
+      tos_reviewed_at: null
+      tos_verdict: NOT_REVIEWED
+      legal_basis: null
+
+  - code: cpi_mospi
+    display_name: "MoSPI — Consumer Price Index release"
+    domain: mospi.gov.in
+    source_type: OFFICIAL
+    enabled: false
+    policy:
+      robots_url: "https://www.mospi.gov.in/robots.txt"
+      allowed_paths: []
+      disallowed_paths: []
+      crawl_delay_s: 5.0
+      max_requests_per_hour: 60
+      tos_url: null
+      tos_reviewed_at: null
+      tos_verdict: NOT_REVIEWED
+      legal_basis: null
+
+  - code: dgca_fares_benchmark
+    display_name: "DGCA / cited benchmark — average fare release (source TBD)"
+    domain: dgca.gov.in
+    source_type: OFFICIAL
+    enabled: false
+    policy:
+      robots_url: "https://www.dgca.gov.in/robots.txt"
+      allowed_paths: []
+      disallowed_paths: []
+      crawl_delay_s: 5.0
+      max_requests_per_hour: 60
+      tos_url: null
+      tos_reviewed_at: null
+      tos_verdict: NOT_REVIEWED
+      legal_basis: null
+
+  - code: irctc_rail
+    display_name: "IRCTC — AC-2 rail fares (placeholder, no source integrated)"
+    domain: irctc.co.in
+    source_type: OFFICIAL
+    enabled: false
+    policy:
+      robots_url: "https://www.irctc.co.in/robots.txt"
+      allowed_paths: []
+      disallowed_paths: []
+      crawl_delay_s: 10.0
+      max_requests_per_hour: 30
+      tos_url: null
+      tos_reviewed_at: null
+      tos_verdict: NOT_REVIEWED
+      legal_basis: null
+
   # --------------------------------------------------------- airline websites ----
   - code: airline_indigo
     display_name: "IndiGo"

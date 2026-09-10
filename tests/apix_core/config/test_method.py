@@ -18,6 +18,7 @@ def _method(**overrides: object) -> dict[str, object]:
         "window": {"length_periods": 13, "frequency": "M"},
         "splice_method": "movement",
         "quality_adjustment": {"enabled": True, "columns": ["stops"]},
+        "booking_profile": {"source": "test fixture", "weights": {"AP00_03": 1.0}},
         "imputation_rule": "targeted_mean",
         "outlier_rules": [],
     }
@@ -30,6 +31,16 @@ class TestShippedMethod:
         method = load_method(config_dir)
         assert method.method_version == "2026.1"
         assert method.elementary_formula is ElementaryFormula.JEVONS
+
+    def test_booking_profile_windows_match_the_basket(self, config_dir) -> None:
+        """The booking-profile weights must key on the advance windows that actually
+        exist — a typo here would silently drop a window's weight rather than fail.
+        """
+        from apix_core.config import load_basket
+
+        basket_codes = {w.code for w in load_basket(config_dir).advance_windows}
+        method = load_method(config_dir)
+        assert set(method.booking_profile.weights) == basket_codes
 
     def test_quality_adjustment_columns_exist_on_the_clean_table(self, config_dir) -> None:
         """A hedonic characteristic must be a column we actually store.

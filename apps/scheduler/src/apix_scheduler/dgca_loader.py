@@ -51,6 +51,12 @@ CITY_ALIASES: dict[str, str] = {
     "GOA": "VASCO DA GAMA",  # basket flies GOI (Dabolim); DGCA reports the city as Goa
     "TRIVANDRUM": "THIRUVANANTHAPURAM",
     "PONDICHERRY": "PUDUCHERRY",
+    # Since Navi Mumbai International and Manohar (Mopa) International opened, DGCA's
+    # city-pair table disambiguates each metro's two airports rather than reporting one
+    # combined "MUMBAI"/"GOA" row. The basket flies BOM (Chhatrapati Shivaji, Mumbai) and
+    # GOI (Dabolim, South Goa) — not the newer Navi Mumbai or Mopa/North Goa airports.
+    "MUMBAI (MUMBAI)": "MUMBAI",
+    "GOA (DABOLIM, SOUTH GOA)": "VASCO DA GAMA",
 }
 
 _SHARE_PLACES = Decimal("0.00000001")  # route.dgca_pax_share is Numeric(9, 8)

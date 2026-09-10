@@ -104,3 +104,17 @@ class Frequency(StrEnum):
     MONTHLY = "M"
     QUARTERLY = "Q"
     ANNUAL = "A"
+
+
+class Role(StrEnum):
+    """Access tiers for the public API.
+
+    ``PUBLIC`` needs no API key. ``RESEARCHER`` and ``OFFICIAL`` are granted by an
+    ``api_key`` row and unlock draft/pre-release figures and microdata (individual
+    quotes, provenance, exports) — never a wider view of published series data, which
+    is public by definition.
+    """
+
+    PUBLIC = "PUBLIC"
+    RESEARCHER = "RESEARCHER"
+    OFFICIAL = "OFFICIAL"

@@ -1,0 +1,74 @@
+# DGCA Monthly Domestic Traffic Report, July 2026 (city-pair passenger table).
+#
+# Source: DGCA "Monthly Statistics — Domestic Air Transport" (city-pair-wise scheduled
+# domestic passenger traffic), published at https://www.dgca.gov.in/digigov-portal/
+# ("Statistics & Reports" -> "Air Transport Statistics" -> "Domestic" -> "Monthly"). The
+# DGCA portal serves these as per-month XLSX workbooks with no stable direct-download
+# URL, so this extract was pulled from the open-data mirror that converts and aggregates
+# those same DGCA workbooks to CSV: https://github.com/Vonter/india-aviation-traffic
+# (file: aggregated/domestic/city.csv, filtered here to Year=2026, Month=07).
+#
+# Retrieved 2026-09-10 by Claude (Claude Code), on behalf of sanchitpandey07@hotmail.com,
+# from https://raw.githubusercontent.com/Vonter/india-aviation-traffic/main/aggregated/domestic/city.csv
+#
+# Only the 50 APIx basket routes are extracted below; passengers are one direction per row.
+# Mumbai uses DGCA's "MUMBAI (MUMBAI)" label (Chhatrapati Shivaji Maharaj International),
+# excluding Navi Mumbai International Airport, which DGCA now reports separately.
+# Goa uses DGCA's "GOA (DABOLIM, SOUTH GOA)" label — the basket's GOI route flies Dabolim,
+# not the newer Manohar International (Mopa, North Goa), also now reported separately.
+#
+# total_domestic_pax for the share denominator (2026-07): 23,998,822 — the sum of
+# "Passenger Number" across all airlines, Type=ScheduledDomestic, for Year=2026/Month=07
+# in the same mirror's aggregated/domestic/carrier.csv (DGCA's own carrier-wise scheduled
+# domestic traffic table). Passed to dgca_loader as --total-domestic-pax 23998822.
+origin_city,dest_city,passengers
+DELHI,MUMBAI (MUMBAI),233888
+MUMBAI (MUMBAI),DELHI,225172
+DELHI,BENGALURU,192916
+BENGALURU,DELHI,189511
+MUMBAI (MUMBAI),BENGALURU,151392
+BENGALURU,MUMBAI (MUMBAI),140250
+DELHI,KOLKATA,108324
+KOLKATA,DELHI,112824
+BENGALURU,HYDERABAD,81618
+HYDERABAD,BENGALURU,83940
+DELHI,CHENNAI,84403
+CHENNAI,DELHI,79837
+DELHI,HYDERABAD,122643
+HYDERABAD,DELHI,120755
+MUMBAI (MUMBAI),CHENNAI,85660
+CHENNAI,MUMBAI (MUMBAI),76787
+BENGALURU,CHENNAI,64477
+CHENNAI,BENGALURU,62259
+DELHI,PUNE,113641
+PUNE,DELHI,105838
+MUMBAI (MUMBAI),KOLKATA,65997
+KOLKATA,MUMBAI (MUMBAI),68892
+DELHI,AHMEDABAD,87309
+AHMEDABAD,DELHI,82821
+DELHI,"GOA (DABOLIM, SOUTH GOA)",38575
+"GOA (DABOLIM, SOUTH GOA)",DELHI,39014
+MUMBAI (MUMBAI),HYDERABAD,79611
+HYDERABAD,MUMBAI (MUMBAI),76742
+BENGALURU,KOLKATA,68141
+KOLKATA,BENGALURU,70563
+DELHI,KOCHI,39014
+KOCHI,DELHI,33359
+DELHI,SRINAGAR,70584
+SRINAGAR,DELHI,71812
+DELHI,PATNA,53172
+PATNA,DELHI,55727
+DELHI,LUCKNOW,50662
+LUCKNOW,DELHI,51891
+MUMBAI (MUMBAI),"GOA (DABOLIM, SOUTH GOA)",46557
+"GOA (DABOLIM, SOUTH GOA)",MUMBAI (MUMBAI),44299
+BENGALURU,KOCHI,53883
+KOCHI,BENGALURU,52215
+KOLKATA,CHENNAI,45016
+CHENNAI,KOLKATA,43696
+DELHI,GUWAHATI,57504
+GUWAHATI,DELHI,59575
+MUMBAI (MUMBAI),AHMEDABAD,64923
+AHMEDABAD,MUMBAI (MUMBAI),66720
+HYDERABAD,CHENNAI,46247
+CHENNAI,HYDERABAD,45277

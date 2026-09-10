@@ -1,19 +1,17 @@
-"""/v1/metadata — the basket and the method, as served to consumers.
-
-These two endpoints are the only ones that read real data in this phase: they serve the
-validated contents of ``config/basket.yaml`` and ``config/method.yaml``. That is
-deliberate — the basket and the method are published facts about how the index is built,
-and they exist today.
+"""/v1/metadata — the basket, the carrier reference and the method, as served to
+consumers.
 """
 
 from __future__ import annotations
 
-from typing import Literal
+from typing import Literal, cast
 
 from fastapi import APIRouter
+from sqlalchemy import select
 
+from apix_api.db import SessionDep  # noqa: TC001
 from apix_api.errors import ERROR_RESPONSES
-from apix_api.examples import response_meta
+from apix_api.meta import build_meta
 from apix_api.schemas import (
     AdvanceWindowOut,
     BasketMetadata,
@@ -23,19 +21,24 @@ from apix_api.schemas import (
     RouteSummary,
 )
 from apix_core.config import config_hash, load_basket, load_method
+from apix_core.models import Airport, Carrier
 
 router = APIRouter(prefix="/v1/metadata", tags=["metadata"], responses=ERROR_RESPONSES)
 
 
 @router.get("/basket", summary="The route basket and its weights", response_model=BasketMetadata)
-async def get_basket() -> BasketMetadata:
+async def get_basket(session: SessionDep) -> BasketMetadata:
     """Serve the current basket.
 
-    ``weights_populated`` is false and every ``dgca_pax_share`` is null until Phase 2
-    loads the DGCA release. A consumer can therefore tell, from the response alone, that
-    the index is not yet weighted — rather than discovering it from a footnote.
+    ``weights_populated`` is false and every ``dgca_pax_share`` is null until the DGCA
+    release is loaded into ``config/basket.yaml``. A consumer can therefore tell, from
+    the response alone, that the index is not yet weighted — rather than discovering it
+    from a footnote.
     """
     basket = load_basket()
+    city_by_iata: dict[str, str] = dict(
+        (await session.execute(select(Airport.iata, Airport.city))).tuples().all()
+    )
     return BasketMetadata(
         basket_version=basket.basket_version,
         effective_from=basket.effective_from,
@@ -50,9 +53,9 @@ async def get_basket() -> BasketMetadata:
             RouteSummary(
                 code=r.code,
                 origin_iata=r.origin,
-                origin_city="",
+                origin_city=city_by_iata.get(r.origin, ""),
                 dest_iata=r.dest,
-                dest_city="",
+                dest_city=city_by_iata.get(r.dest, ""),
                 dgca_pax_share=float(r.dgca_pax_share) if r.dgca_pax_share is not None else None,
                 basket_version=basket.basket_version,
                 active_from=r.active_from,
@@ -64,27 +67,23 @@ async def get_basket() -> BasketMetadata:
 
 
 @router.get("/carriers", summary="Scheduled domestic carriers", response_model=CarriersMetadata)
-async def get_carriers() -> CarriersMetadata:
-    """Serve the carrier reference list.
-
-    Values mirror ``db/seeds/carriers.csv`` (DGCA scheduled domestic operators) — real
-    reference data, not placeholders. Phase 3 serves this from the ``carrier`` table
-    the seed loads; the hard-coded copy exists only because this phase has no database.
+async def get_carriers(session: SessionDep) -> CarriersMetadata:
+    """Serve the carrier reference list from the ``carrier`` table (``db/seeds/carriers.csv``,
+    DGCA scheduled domestic operators — real reference data, loaded by ``make seed``).
     """
-    rows: list[tuple[str, str, str, Literal["FSC", "LCC", "REGIONAL"]]] = [
-        ("AI", "AIC", "Air India", "FSC"),
-        ("6E", "IGO", "IndiGo", "LCC"),
-        ("IX", "AXB", "Air India Express", "LCC"),
-        ("SG", "SEJ", "SpiceJet", "LCC"),
-        ("QP", "AKJ", "Akasa Air", "LCC"),
-        ("9I", "LLR", "Alliance Air", "REGIONAL"),
-    ]
+    rows = (await session.execute(select(Carrier).order_by(Carrier.iata))).scalars().all()
     return CarriersMetadata(
         carriers=[
-            CarrierOut(iata=iata, icao=icao, name=name, carrier_type=carrier_type)
-            for iata, icao, name, carrier_type in rows
+            CarrierOut(
+                iata=row.iata,
+                icao=row.icao or "",
+                name=row.name,
+                carrier_type=cast("Literal['FSC', 'LCC', 'REGIONAL']", row.carrier_type.value),
+            )
+            for row in rows
+            if row.carrier_type.value in ("FSC", "LCC", "REGIONAL")
         ],
-        meta=response_meta(basket_version="2026.1", with_run=False),
+        meta=build_meta(data_status="PUBLISHED"),
     )
 
 
