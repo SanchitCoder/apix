@@ -584,8 +584,26 @@ def upgrade() -> None:
     )
 
     # Append-only enforcement. fare_quote is evidence; it is never edited or deleted.
-    op.execute("CREATE RULE fare_quote_no_update AS ON UPDATE TO fare_quote DO INSTEAD NOTHING")
-    op.execute("CREATE RULE fare_quote_no_delete AS ON DELETE TO fare_quote DO INSTEAD NOTHING")
+    # Postgres RULEs cannot be created on a hypertable ("hypertables do not support
+    # rules"), so this is a BEFORE-trigger that returns NULL to skip the operation —
+    # the same silent no-op DO INSTEAD NOTHING gave, but hypertable-compatible.
+    op.execute(
+        """
+        CREATE OR REPLACE FUNCTION fare_quote_append_only() RETURNS trigger AS $$
+        BEGIN
+            RETURN NULL;
+        END;
+        $$ LANGUAGE plpgsql
+        """
+    )
+    op.execute(
+        "CREATE TRIGGER fare_quote_no_update BEFORE UPDATE ON fare_quote "
+        "FOR EACH ROW EXECUTE FUNCTION fare_quote_append_only()"
+    )
+    op.execute(
+        "CREATE TRIGGER fare_quote_no_delete BEFORE DELETE ON fare_quote "
+        "FOR EACH ROW EXECUTE FUNCTION fare_quote_append_only()"
+    )
 
     # ----------------------------------------------------------------- clean ----
     op.create_table(
@@ -717,8 +735,9 @@ def downgrade() -> None:
     Present so a local database can be reset. Migrations are forward-only in any
     deployed environment: this is never run against staging or production.
     """
-    op.execute("DROP RULE IF EXISTS fare_quote_no_delete ON fare_quote")
-    op.execute("DROP RULE IF EXISTS fare_quote_no_update ON fare_quote")
+    op.execute("DROP TRIGGER IF EXISTS fare_quote_no_delete ON fare_quote")
+    op.execute("DROP TRIGGER IF EXISTS fare_quote_no_update ON fare_quote")
+    op.execute("DROP FUNCTION IF EXISTS fare_quote_append_only()")
 
     for table in (
         "nowcast_value",

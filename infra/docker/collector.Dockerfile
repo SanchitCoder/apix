@@ -12,7 +12,10 @@ ENV UV_COMPILE_BYTECODE=1 \
     UV_LINK_MODE=copy \
     UV_PYTHON_DOWNLOADS=never
 
-WORKDIR /build
+# Matches the runtime stage's WORKDIR: uv bakes the venv's absolute path into every
+# console-script shebang (e.g. playwright) at creation time, so if this stage built the
+# venv at a different path, the copied scripts would exec a path that no longer exists.
+WORKDIR /app
 
 COPY pyproject.toml uv.lock ./
 COPY packages/apix_core/pyproject.toml packages/apix_core/
@@ -47,7 +50,7 @@ RUN apt-get update \
 WORKDIR /app
 
 # Only the virtualenv: --no-editable put real wheels in it, so no source is needed.
-COPY --from=builder --chown=apix:apix /build/.venv /app/.venv
+COPY --from=builder --chown=apix:apix /app/.venv /app/.venv
 COPY --chown=apix:apix config /app/config
 COPY --chown=apix:apix fixtures /app/fixtures
 

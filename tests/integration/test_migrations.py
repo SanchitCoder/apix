@@ -59,17 +59,24 @@ def test_fare_quote_is_a_hypertable(migrated_engine) -> None:
 def test_fare_quote_rejects_update_and_delete(migrated_engine) -> None:
     """Append-only is enforced by the database, not by convention.
 
-    The rules make UPDATE and DELETE no-ops, so an accidental correction to raw evidence
-    silently changes nothing rather than silently changing something.
+    Postgres RULEs cannot be created on a hypertable, so this is enforced by
+    BEFORE-triggers that return NULL: UPDATE and DELETE become no-ops, so an accidental
+    correction to raw evidence silently changes nothing rather than silently changing
+    something.
     """
     with migrated_engine.connect() as conn:
-        rules = (
-            conn.execute(text("SELECT rulename FROM pg_rules WHERE tablename = 'fare_quote'"))
+        triggers = (
+            conn.execute(
+                text(
+                    "SELECT trigger_name FROM information_schema.triggers "
+                    "WHERE event_object_table = 'fare_quote'"
+                )
+            )
             .scalars()
             .all()
         )
-    assert "fare_quote_no_update" in rules
-    assert "fare_quote_no_delete" in rules
+    assert "fare_quote_no_update" in triggers
+    assert "fare_quote_no_delete" in triggers
 
 
 def test_treatment_check_constraints_are_installed(migrated_engine) -> None:

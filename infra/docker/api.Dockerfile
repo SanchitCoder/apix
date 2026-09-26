@@ -11,7 +11,10 @@ ENV UV_COMPILE_BYTECODE=1 \
     UV_LINK_MODE=copy \
     UV_PYTHON_DOWNLOADS=never
 
-WORKDIR /build
+# Matches the runtime stage's WORKDIR: uv bakes the venv's absolute path into every
+# console-script shebang (e.g. uvicorn) at creation time, so if this stage built the
+# venv at a different path, the copied scripts would exec a path that no longer exists.
+WORKDIR /app
 
 # Manifests first, so a dependency layer is only rebuilt when a pin changes.
 COPY pyproject.toml uv.lock ./
@@ -47,7 +50,7 @@ ENV APIX_CONFIG_DIR=/app/config \
 WORKDIR /app
 
 # Only the virtualenv: --no-editable put real wheels in it, so no source is needed.
-COPY --from=builder --chown=apix:apix /build/.venv /app/.venv
+COPY --from=builder --chown=apix:apix /app/.venv /app/.venv
 
 # Runtime inputs: migrations, validated config, reference seeds.
 COPY --chown=apix:apix alembic.ini ./
