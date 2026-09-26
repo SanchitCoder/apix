@@ -14,8 +14,8 @@ description: >-
   integrations) and can be raised per key without a deploy.
 
 public:
-  requests_per_minute: 60
-  burst: 10
+  requests_per_minute: 300
+  burst: 40
 
 researcher:
   requests_per_minute: 600
