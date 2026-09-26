@@ -1,10 +1,14 @@
 /**
- * Theme state — light only. The dashboard shell (navy header/sidebar, white cards) is a
- * fixed light design with no dark-mode toggle exposed anywhere in the UI, so this no
- * longer follows the OS preference or a stored value: doing so previously flipped every
- * `bg-surface` panel to near-black for anyone on a dark system theme, and skewed chart
- * colours to the dark palette against a light background. `index.css` defines light
- * values only now. Re-introduce preference switching only alongside a real toggle.
+ * Theme state — dark only, and fixed, not OS-driven. The dashboard was reskinned to a
+ * dark "statistical monitoring terminal" look (index.css / theme/tokens.ts's DARK
+ * export); this file hard-codes that choice by always stamping
+ * `data-theme="dark"` itself, exactly the way this codebase previously hard-coded
+ * light: an earlier version *followed* `prefers-color-scheme`, which flipped every
+ * `bg-surface` panel to near-black for anyone on a dark OS theme whether or not the
+ * light design was ready for it. The fix here is the same shape, just the other
+ * direction — an explicit, reviewed value the app sets on itself, never a media query
+ * silently deciding for it. Re-introduce preference switching only alongside a real,
+ * user-facing toggle that sets this deliberately.
  */
 
 import { createContext, useContext, useEffect, useMemo } from "react";
@@ -23,7 +27,7 @@ interface ThemeContextValue {
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
-const MODE: ThemeMode = "light";
+const MODE: ThemeMode = "dark";
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
@@ -37,7 +41,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       mode: MODE,
       tokens: tokensFor(MODE),
       setPreference: () => {
-        /* no-op until a real dark-mode toggle exists */
+        /* no-op until a real light-mode toggle exists */
       },
     }),
     [],

@@ -97,7 +97,7 @@ export function Toolbar({ routes, carriers, value, onApply }: ToolbarProps) {
       <button
         type="submit"
         disabled={!dirty}
-        className="rounded-full bg-accent px-5 py-2 text-sm font-semibold text-white transition-colors hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+        className="rounded-full bg-accent px-5 py-2 text-sm font-semibold text-navy transition-colors hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
       >
         Apply
       </button>

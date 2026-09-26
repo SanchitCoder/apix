@@ -42,7 +42,12 @@ const FONT = '"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif'
 const FONT_MONO = '"IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace';
 const SIZES = { xs: 11, sm: 12, base: 13, lg: 16, xl: 22 } as const;
 
-// Status colours are fixed across modes and never reused as series colours.
+// Status colours are never reused as series colours, and each mode's four hues carry
+// the same meaning (good = rising/compliant, critical = falling/breached, ...) — but
+// the literal inks are tuned per mode, not copied verbatim, because the same hex that
+// reads clearly as "dark ink on a near-white card" turns muddy and low-contrast as
+// "dark ink on a near-black terminal surface." LIGHT keeps the original inks; DARK
+// (below) lightens each one for the same contrast job against a much darker ground.
 const STATUS = {
   good: "#0ca30c",
   warning: "#fab219",
@@ -82,33 +87,39 @@ export const LIGHT: ThemeTokens = {
   fontSize: SIZES,
 };
 
+// The terminal palette: a near-black navy ground (not pure black — a trading-desk
+// monitor at night is still blue-black, never neutral grey), a mint/teal brand accent
+// or the amber-on-charcoal cousin of it, and the same fixed STATUS pair every mode
+// uses for up/down semantics. Categorical `series` keeps the validated CVD-safe order
+// from LIGHT's hues, just re-lit for a dark ground — do not reorder or insert hues
+// without re-running the dataviz palette validator.
 export const DARK: ThemeTokens = {
   mode: "dark",
-  page: "#0d0d0d",
-  surface: "#1a1a19",
-  surfaceRaised: "#232322",
-  inkPrimary: "#ffffff",
-  inkSecondary: "#c3c2b7",
-  inkMuted: "#898781",
-  grid: "#2c2c2a",
-  axis: "#383835",
-  border: "rgba(255,255,255,0.10)",
+  page: "#080b12",
+  surface: "#0d121c",
+  surfaceRaised: "#111827",
+  inkPrimary: "#e7ecf5",
+  inkSecondary: "#8a94a6",
+  inkMuted: "#5b6472",
+  grid: "#1b2331",
+  axis: "#263041",
+  border: "rgba(148,163,184,0.14)",
   series: [
-    "#3987e5",
-    "#d95926",
-    "#199e70",
-    "#c98500",
-    "#d55181",
-    "#008300",
+    "#3ee6b4",
+    "#eb6834",
+    "#5b9cf6",
+    "#eda100",
+    "#e87ba4",
+    "#4fd67a",
     "#9085e9",
     "#e66767",
   ],
-  sequential: ["#0d366b", "#184f95", "#256abf", "#3987e5", "#6da7ec", "#9ec5f4", "#cde2fb"],
-  divergingNeg: ["#cde2fb", "#6da7ec", "#3987e5", "#1c5cab"],
-  divergingMid: "#383835",
+  sequential: ["#062e26", "#0a4a3c", "#106b57", "#189173", "#3ee6b4", "#8ff3d3", "#d4faec"],
+  divergingNeg: ["#d4faec", "#8ff3d3", "#3ee6b4", "#106b57"],
+  divergingMid: "#263041",
   divergingPos: ["#7a2f2f", "#d03b3b", "#e66767", "#f2b8b8"],
-  status: STATUS,
-  accent: "#3987e5",
+  status: { good: "#3ee6b4", warning: "#eda100", serious: "#eb6834", critical: "#ff5c72" },
+  accent: "#3ee6b4",
   fontFamily: FONT,
   fontFamilyMono: FONT_MONO,
   fontSize: SIZES,

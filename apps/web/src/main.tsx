@@ -24,7 +24,7 @@ const queryClient = new QueryClient({
 const withSuspense = (element: React.ReactNode) => (
   <Suspense
     fallback={
-      <div className="flex h-64 items-center justify-center p-6 text-xs text-slate-500" role="status">
+      <div className="flex h-64 items-center justify-center p-6 text-xs text-ink-2" role="status">
         Loading view…
       </div>
     }

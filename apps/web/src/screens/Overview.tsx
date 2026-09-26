@@ -20,11 +20,13 @@ import {
   useMethodPreview,
   useRoutes,
 } from "../api/hooks";
+import { ChartPanel } from "../components/ChartPanel";
 import { CoverageStrip } from "../components/CoverageStrip";
 import { CoverageTile } from "../components/CoverageTile";
 import { DataExplorerCard } from "../components/DataExplorerCard";
 import { HeroIndexCard } from "../components/HeroIndexCard";
 import { IconDatabase, IconNetwork, IconPlane } from "../components/icons";
+import { IndexChart } from "../components/IndexChart";
 import { LeadTimeBarsPanel } from "../components/LeadTimeBarsPanel";
 import { MoversPanel } from "../components/MoversPanel";
 import { RouteAnalysisPanel } from "../components/RouteAnalysisPanel";
@@ -36,6 +38,13 @@ import { buildCorridors } from "../lib/corridors";
 import { computeMovers } from "../lib/movers";
 import { formatCount, formatDate, todayISO } from "../lib/format";
 
+const RANGES = [
+  { label: "3M", periods: 3 },
+  { label: "6M", periods: 6 },
+  { label: "1Y", periods: 12 },
+  { label: "ALL", periods: Infinity },
+] as const;
+
 export default function Overview() {
   const headline = useIndexSeries(HEADLINE_SERIES);
   const headlinePreview = useMethodPreview({});
@@ -46,6 +55,7 @@ export default function Overview() {
   const coverage = useCoverage(todayISO());
 
   const [filter, setFilter] = useState<ToolbarValue>({ route: "DEL-BOM", date: todayISO(), carrier: "" });
+  const [range, setRange] = useState<(typeof RANGES)[number]>(RANGES[3]);
 
   const corridors = useMemo(
     () => buildCorridors(routes.data?.items, heatmap.data?.items),
@@ -55,14 +65,42 @@ export default function Overview() {
 
   const observationsToday = coverage.data?.sources.reduce((sum, s) => sum + s.quotes_collected, 0);
 
+  const chartItems = useMemo(() => {
+    const items = headline.data?.items ?? [];
+    return Number.isFinite(range.periods) ? items.slice(-range.periods) : items;
+  }, [headline.data, range]);
+
   return (
     <div className="flex flex-col gap-6">
-      <Toolbar
-        routes={basket.data?.routes ?? []}
-        carriers={carriers.data?.carriers ?? []}
-        value={filter}
-        onApply={setFilter}
-      />
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <Toolbar
+          routes={basket.data?.routes ?? []}
+          carriers={carriers.data?.carriers ?? []}
+          value={filter}
+          onApply={setFilter}
+        />
+        <div
+          className="mono-label flex items-center gap-0.5 self-start rounded-lg border border-edge bg-surface p-0.5 text-[11px]"
+          role="group"
+          aria-label="Chart range"
+        >
+          {RANGES.map((r) => (
+            <button
+              key={r.label}
+              type="button"
+              onClick={() => setRange(r)}
+              aria-pressed={range.label === r.label}
+              className={`rounded-md px-2.5 py-1.5 transition-colors ${
+                range.label === r.label
+                  ? "bg-accent-soft text-accent-ink"
+                  : "text-ink-2 hover:text-ink"
+              }`}
+            >
+              {r.label}
+            </button>
+          ))}
+        </div>
+      </div>
 
       {/* Row 1: Headline index & notable movers */}
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
@@ -83,18 +121,30 @@ export default function Overview() {
             }
           />
         </div>
-        <div className="lg:col-span-4 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_2px_12px_rgba(0,0,0,0.03)]">
-          <h2 className="text-base font-bold text-slate-900">Notable movers</h2>
-          <p className="mt-0.5 text-xs text-slate-500">Largest period-over-period change, from /v1/heatmap.</p>
+        <div className="rounded-2xl border border-edge bg-surface p-5 shadow-card lg:col-span-4">
+          <h2 className="text-base font-bold text-ink">Notable movers</h2>
+          <p className="mt-0.5 text-xs text-ink-2">Largest period-over-period change, from /v1/heatmap.</p>
           <div className="mt-4">
             {heatmap.isLoading ? (
-              <p className="text-xs text-slate-500">Loading…</p>
+              <p className="text-xs text-ink-2">Loading…</p>
             ) : (
               <MoversPanel movers={movers} />
             )}
           </div>
         </div>
       </div>
+
+      {/* Anchor visual: the headline index over time, with SMA and base-period line. */}
+      <ChartPanel
+        title="India Airfare Price Index — Time Series"
+        subtitle="Headline index, 3-period moving average, and fare observations behind each period."
+        isLoading={headline.isLoading}
+        error={headline.error}
+        isEmpty={chartItems.length === 0}
+        emptyDetail="No published periods yet for this range — the national index needs real DGCA passenger-share weights before it can publish (see the card above)."
+      >
+        {chartItems.length > 0 && <IndexChart items={chartItems} referenceValue={100} />}
+      </ChartPanel>
 
       {/* Row 2: KPI tiles */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
@@ -128,14 +178,14 @@ export default function Overview() {
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
         <RouteAnalysisPanel routeCode={filter.route} />
         <LeadTimeBarsPanel routeCode={filter.route} carrier={filter.carrier} />
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_2px_12px_rgba(0,0,0,0.03)]">
-          <h2 className="text-base font-bold text-slate-900">Route momentum</h2>
-          <p className="mt-0.5 text-xs text-slate-500">Corridors coloured by change vs. the previous period.</p>
+        <div className="rounded-2xl border border-edge bg-surface p-5 shadow-card">
+          <h2 className="text-base font-bold text-ink">Route momentum</h2>
+          <p className="mt-0.5 text-xs text-ink-2">Corridors coloured by change vs. the previous period.</p>
           <div className="mt-3">
             {routes.isLoading || heatmap.isLoading ? (
-              <p className="text-xs text-slate-500">Loading…</p>
+              <p className="text-xs text-ink-2">Loading…</p>
             ) : corridors.length === 0 ? (
-              <p className="text-xs text-slate-500">No routes with known airport coordinates in the current basket.</p>
+              <p className="text-xs text-ink-2">No routes with known airport coordinates in the current basket.</p>
             ) : (
               <RouteMap corridors={corridors} compact />
             )}
@@ -145,12 +195,12 @@ export default function Overview() {
 
       {/* Row 4: today's source status, data export */}
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_2px_12px_rgba(0,0,0,0.03)]">
-          <h2 className="text-base font-bold text-slate-900">Source status — today</h2>
-          <p className="mt-0.5 text-xs text-slate-500">Per-source collection status, PolicyEngine-gated.</p>
+        <div className="rounded-2xl border border-edge bg-surface p-5 shadow-card">
+          <h2 className="text-base font-bold text-ink">Source status — today</h2>
+          <p className="mt-0.5 text-xs text-ink-2">Per-source collection status, PolicyEngine-gated.</p>
           <div className="mt-3">
             {coverage.isLoading ? (
-              <p className="text-xs text-slate-500">Loading…</p>
+              <p className="text-xs text-ink-2">Loading…</p>
             ) : coverage.data !== undefined ? (
               <CoverageStrip coverage={coverage.data} />
             ) : null}

@@ -2,51 +2,50 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Theme tokens — mirrors src/theme/tokens.ts (LIGHT only). There is no dark-mode
-   toggle anywhere in this UI, so no dark variant is defined here — an OS/browser set
-   to dark mode must never be able to flip any card to near-black on its own. If a
-   real dark-mode toggle is ever added, reintroduce the dark block guarded strictly by
-   an explicit `:root[data-theme="dark"]` selector, never by a bare prefers-color-scheme
-   media query. */
+/* Theme tokens — mirrors src/theme/tokens.ts's DARK export. This is now a fixed,
+   deliberate dark "statistical monitoring terminal" design (matching the reference
+   this build was reskinned against), not the OS dark-mode preference — the previous
+   incident here was an *automatic*, unreviewed light->dark flip driven by
+   prefers-color-scheme; this is a hand-tuned, explicitly-set `data-theme="dark"` the
+   app always sets itself (see theme/ThemeContext.tsx). If a light mode is ever
+   reintroduced, it must be an explicit opt-in the user picks, never a media query. */
 :root {
-  color-scheme: light;
-  --page: #eef2f8;
-  --surface: #ffffff;
-  --surface-raised: #ffffff;
-  --ink: #0b0b0b;
-  --ink-secondary: #52514e;
-  --ink-muted: #898781;
-  --grid: #e1e0d9;
-  --axis: #c3c2b7;
-  --border: rgba(11, 11, 11, 0.1);
-  --accent: #2a78d6;
-  --accent-ink: #1c5cab;
-  --status-good-ink: #006300;
-  --status-warning-ink: #7a5200;
-  --status-serious-ink: #9c3c14;
-  --status-critical-ink: #ab2020;
-  --focus-ring: #1c5cab;
+  color-scheme: dark;
+  --page: #080b12;
+  --surface: #0d121c;
+  --surface-raised: #111827;
+  --ink: #e7ecf5;
+  --ink-secondary: #8a94a6;
+  --ink-muted: #5b6472;
+  --grid: #1b2331;
+  --axis: #263041;
+  --border: rgba(148, 163, 184, 0.14);
+  --accent: #3ee6b4;
+  --accent-ink: #3ee6b4;
+  --status-good-ink: #3ee6b4;
+  --status-warning-ink: #eda100;
+  --status-serious-ink: #eb6834;
+  --status-critical-ink: #ff5c72;
+  --focus-ring: #3ee6b4;
 
-  /* Low-opacity fills for icon chips / trend pills — explicit variables rather than
-     Tailwind's opacity-modifier-on-arbitrary-color path, which needs color-mix()
-     support this codebase doesn't want to depend on. */
-  --accent-soft: rgba(42, 120, 214, 0.1);
-  --good-soft: rgba(0, 99, 0, 0.1);
-  --warning-soft: rgba(122, 82, 0, 0.1);
-  --serious-soft: rgba(156, 60, 20, 0.1);
-  --critical-soft: rgba(171, 32, 32, 0.1);
-  --table-stripe: #f6f8fc;
+  --accent-soft: rgba(62, 230, 180, 0.12);
+  --good-soft: rgba(62, 230, 180, 0.12);
+  --warning-soft: rgba(237, 161, 0, 0.14);
+  --serious-soft: rgba(235, 104, 52, 0.14);
+  --critical-soft: rgba(255, 92, 114, 0.14);
+  --table-stripe: rgba(148, 163, 184, 0.05);
 
-  /* Institutional shell — header, sidebar, elevated cards. */
-  --navy: #0c1c3f;
-  --navy-2: #14295c;
-  --on-navy: #f4f7fd;
-  --on-navy-muted: rgba(244, 247, 253, 0.68);
-  --sidebar-bg: #ffffff;
-  --sidebar-active-bg: rgba(42, 120, 214, 0.1);
-  --sidebar-active-ink: #1c5cab;
-  --shadow-card: 0 1px 2px rgba(16, 24, 51, 0.04), 0 10px 24px -14px rgba(16, 24, 51, 0.18);
-  --shadow-card-hover: 0 2px 4px rgba(16, 24, 51, 0.06), 0 16px 32px -14px rgba(16, 24, 51, 0.24);
+  /* Shell chrome — top bar, ticker, tab strip. Slightly darker than --surface so
+     panels read as "raised" off the shell rather than blending into it. */
+  --navy: #05070d;
+  --navy-2: #0a0f18;
+  --on-navy: #e7ecf5;
+  --on-navy-muted: rgba(231, 236, 245, 0.6);
+  --sidebar-bg: #05070d;
+  --sidebar-active-bg: rgba(62, 230, 180, 0.12);
+  --sidebar-active-ink: #3ee6b4;
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.3), 0 10px 24px -14px rgba(0, 0, 0, 0.5);
+  --shadow-card-hover: 0 2px 4px rgba(0, 0, 0, 0.35), 0 16px 32px -14px rgba(0, 0, 0, 0.6);
   --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
@@ -55,6 +54,8 @@ body {
   background: var(--page);
   color: var(--ink);
   font-family: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  background-image: radial-gradient(ellipse 1200px 600px at 50% -10%, rgba(62, 230, 180, 0.05), transparent);
+  background-attachment: fixed;
 }
 
 /* One visible, consistent focus indicator everywhere. */
@@ -102,12 +103,13 @@ body {
 }
 
 .card-hover {
-  transition: box-shadow 180ms ease, transform 180ms ease;
+  transition: box-shadow 180ms ease, transform 180ms ease, border-color 180ms ease;
 }
 
 .card-hover:hover {
   box-shadow: var(--shadow-card-hover);
   transform: translateY(-1px);
+  border-color: rgba(148, 163, 184, 0.28);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -116,5 +118,62 @@ body {
   }
   .card-hover:hover {
     transform: none;
+  }
+}
+
+/* Terminal-style tracked label — nav items, section eyebrows, ticker deltas. */
+.mono-label {
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* The scrolling route ticker in the shell header. Duplicated content + a 50%
+   translate is the standard seamless-marquee trick: at the halfway point the two
+   copies are pixel-identical, so the loop point is invisible. Paused on hover so a
+   value can actually be read, and skipped entirely under reduced motion. */
+@keyframes ticker-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.ticker-track {
+  animation: ticker-scroll 45s linear infinite;
+}
+
+.ticker-track:hover {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ticker-track {
+    animation: none;
+  }
+}
+
+/* A single hardware pulse for the LIVE FEED dot — deliberately not a generic
+   opacity-pulse-everything utility, so it reads as "this one signal is live" rather
+   than as ambient decoration. */
+@keyframes live-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(62, 230, 180, 0.55);
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgba(62, 230, 180, 0);
+  }
+}
+
+.live-dot {
+  animation: live-pulse 2.2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .live-dot {
+    animation: none;
   }
 }

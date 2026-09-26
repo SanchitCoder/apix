@@ -203,7 +203,7 @@ export default function RouteExplorer() {
                 onClick={() => setSplit(mode)}
                 className={`rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
                   split === mode
-                    ? "bg-accent text-white shadow-sm"
+                    ? "bg-accent text-navy shadow-sm"
                     : "text-ink-2 hover:text-ink"
                 }`}
               >

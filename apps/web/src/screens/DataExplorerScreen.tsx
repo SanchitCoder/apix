@@ -45,16 +45,16 @@ export default function DataExplorerScreen() {
   return (
     <div className="flex flex-col gap-6">
       {/* Header */}
-      <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="rounded-2xl border border-edge bg-surface p-6 shadow-card flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 text-blue-600">
+          <div className="flex items-center gap-2 text-accent-ink">
             <IconDatabase width={20} height={20} />
             <span className="text-xs font-bold uppercase tracking-wider">Public Microdata Surface</span>
           </div>
-          <h2 className="mt-1 text-2xl font-bold tracking-tight text-slate-900">
+          <h2 className="mt-1 text-2xl font-bold tracking-tight text-ink">
             Standardized Airfare Data Explorer
           </h2>
-          <p className="mt-1 text-xs text-slate-500 max-w-2xl">
+          <p className="mt-1 text-xs text-ink-2 max-w-2xl">
             The cleaned observations one route-period's index value rests on, via{" "}
             <code className="font-mono">/v1/quotes</code> — each row's outlier and imputation
             treatment is shown, not hidden.
@@ -65,7 +65,7 @@ export default function DataExplorerScreen() {
           <a
             href={csvHref}
             download={`apix_quotes_${effectiveRoute}_${period}.csv`}
-            className="flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-blue-700 transition-colors"
+            className="flex items-center gap-2 rounded-xl bg-accent px-5 py-2.5 text-xs font-bold text-navy shadow-sm hover:brightness-110 transition-colors"
           >
             <IconDownload width={15} height={15} />
             Export {quotes.data?.items.length ?? 0} rows shown
@@ -74,13 +74,13 @@ export default function DataExplorerScreen() {
       </div>
 
       {/* Filter Bar */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 rounded-2xl border border-edge bg-surface p-4 shadow-card">
         <div>
-          <label className="block text-[11px] font-semibold text-slate-500 mb-1">Route</label>
+          <label className="block text-[11px] font-semibold text-ink-2 mb-1">Route</label>
           <select
             value={effectiveRoute}
             onChange={(e) => setRoute(e.target.value)}
-            className="w-full rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-medium text-slate-700"
+            className="w-full rounded-lg border border-edge bg-raised px-2.5 py-1.5 text-xs font-medium text-ink"
           >
             {(basket.data?.routes ?? []).map((r) => (
               <option key={r.code} value={r.code}>
@@ -91,38 +91,38 @@ export default function DataExplorerScreen() {
         </div>
 
         <div>
-          <label className="block text-[11px] font-semibold text-slate-500 mb-1">Period</label>
+          <label className="block text-[11px] font-semibold text-ink-2 mb-1">Period</label>
           <input
             type="month"
             value={period.slice(0, 7)}
             onChange={(e) => setPeriod(`${e.target.value}-01`)}
-            className="w-full rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-medium text-slate-700"
+            className="w-full rounded-lg border border-edge bg-raised px-2.5 py-1.5 text-xs font-medium text-ink"
           />
         </div>
       </div>
 
       {/* Results Table */}
-      <div className="rounded-2xl border border-slate-200/80 bg-white shadow-sm overflow-hidden">
-        <div className="px-5 py-3 border-b border-slate-100 flex items-center justify-between">
-          <span className="text-xs font-bold text-slate-900">
+      <div className="rounded-2xl border border-edge bg-surface shadow-card overflow-hidden">
+        <div className="px-5 py-3 border-b border-edge flex items-center justify-between">
+          <span className="text-xs font-bold text-ink">
             Cleaned quotes — {effectiveRoute || "…"}, {period}
           </span>
           {quotes.data !== undefined && <DataStatusBadge status={quotes.data.meta.data_status} />}
         </div>
 
-        {quotes.isLoading && <p className="px-5 py-6 text-xs text-slate-500">Loading…</p>}
+        {quotes.isLoading && <p className="px-5 py-6 text-xs text-ink-2">Loading…</p>}
         {quotes.error !== undefined && quotes.error !== null && (
           <p className="px-5 py-6 text-xs text-rose-600">Could not load quotes for this selection.</p>
         )}
         {quotes.data !== undefined && quotes.data.items.length === 0 && (
-          <p className="px-5 py-6 text-xs text-slate-500">
+          <p className="px-5 py-6 text-xs text-ink-2">
             No quotes recorded for this route and period — an empty result, not an omission.
           </p>
         )}
         {quotes.data !== undefined && quotes.data.items.length > 0 && (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs text-slate-700">
-              <thead className="bg-slate-50 text-[11px] font-semibold text-slate-500 uppercase tracking-wider border-b border-slate-200/80">
+            <table className="w-full text-left text-xs text-ink">
+              <thead className="bg-raised text-[11px] font-semibold text-ink-2 uppercase tracking-wider border-b border-edge/80">
                 <tr>
                   <th className="px-5 py-3">Travel Date</th>
                   <th className="px-5 py-3">Advance</th>
@@ -134,12 +134,12 @@ export default function DataExplorerScreen() {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {quotes.data.items.map((q) => (
-                  <tr key={q.quote_id} className="hover:bg-slate-50/80 transition-colors">
+                  <tr key={q.quote_id} className="hover:bg-raised transition-colors">
                     <td className="px-5 py-3 font-mono">{formatDate(q.travel_date)}</td>
                     <td className="px-5 py-3 font-mono font-medium">T+{q.advance_days}</td>
-                    <td className="px-5 py-3 font-bold text-blue-600">{q.carrier_iata}</td>
+                    <td className="px-5 py-3 font-bold text-accent-ink">{q.carrier_iata}</td>
                     <td className="px-5 py-3 font-mono">{q.source_code}</td>
-                    <td className="px-5 py-3 font-mono font-bold text-slate-900">{formatINR(q.total_fare)}</td>
+                    <td className="px-5 py-3 font-mono font-bold text-ink">{formatINR(q.total_fare)}</td>
                     <td className="px-5 py-3">
                       {q.is_outlier ? (
                         <span className="inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold bg-rose-50 text-rose-700">

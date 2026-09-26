@@ -81,16 +81,16 @@ export default function ApiAccessScreen() {
   return (
     <div className="flex flex-col gap-6">
       {/* Header */}
-      <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="rounded-2xl border border-edge bg-surface p-6 shadow-card flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 text-blue-600">
+          <div className="flex items-center gap-2 text-accent-ink">
             <IconCode width={20} height={20} />
             <span className="text-xs font-bold uppercase tracking-wider">Developer &amp; Consumer Integration</span>
           </div>
-          <h2 className="mt-1 text-2xl font-bold tracking-tight text-slate-900">
+          <h2 className="mt-1 text-2xl font-bold tracking-tight text-ink">
             APIx Programmatic Access &amp; SDMX Feeds
           </h2>
-          <p className="mt-1 text-xs text-slate-500 max-w-2xl">
+          <p className="mt-1 text-xs text-ink-2 max-w-2xl">
             Integrate national airfare statistics into external macroeconomic forecasting, CPI modeling,
             and research pipelines via OpenAPI 3.1 and SDMX-JSON 2.0 protocols. No API key is required —
             the API is unauthenticated in this build.
@@ -102,7 +102,7 @@ export default function ApiAccessScreen() {
             href={`${BASE_URL}/docs`}
             target="_blank"
             rel="noreferrer"
-            className="rounded-xl bg-blue-600 px-5 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-blue-700 transition-colors"
+            className="rounded-xl bg-accent px-5 py-2.5 text-xs font-bold text-navy shadow-sm hover:brightness-110 transition-colors"
           >
             Interactive Swagger Docs ↗
           </a>
@@ -114,23 +114,23 @@ export default function ApiAccessScreen() {
         {ENDPOINTS.map((ep) => (
           <div
             key={ep.id}
-            className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm flex flex-col gap-2.5"
+            className="rounded-2xl border border-edge bg-surface p-5 shadow-card flex flex-col gap-2.5"
           >
             <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-slate-500">{ep.desc}</span>
+              <span className="text-xs font-medium text-ink-2">{ep.desc}</span>
               <button
                 type="button"
                 onClick={() => copy(ep.id, `${BASE_URL}${ep.path}`)}
-                className="flex items-center gap-1 text-xs text-blue-600 hover:underline"
+                className="flex items-center gap-1 text-xs text-accent-ink hover:underline"
               >
                 <IconCopy width={13} height={13} />
                 {copied === ep.id ? "Copied" : "Copy URL"}
               </button>
             </div>
-            <div className="flex items-center justify-between rounded-xl bg-[#0b132b] px-4 py-3 font-mono text-xs text-slate-100 shadow-inner">
+            <div className="flex items-center justify-between rounded-xl bg-navy px-4 py-3 font-mono text-xs text-ink shadow-inner">
               <div>
                 <span className="font-bold text-rose-400 mr-2">{ep.method}</span>
-                <span className="text-slate-300">{BASE_URL}{ep.path}</span>
+                <span className="text-ink-2">{BASE_URL}{ep.path}</span>
               </div>
             </div>
           </div>
